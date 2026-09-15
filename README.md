@@ -1,60 +1,62 @@
-# FX Volatility Regime Model
+﻿# FX Volatility Regime Model
 
-> Modèle quantitatif exploratoire sur le marché des changes (EUR/USD), visant à mesurer un proxy de "peur"/volatilité du marché pour expliquer les rendements et détecter des régimes (normal / bulle / panique).
+> A quantitative model exploring the FX market (EUR/USD) to measure a "fear"/volatility proxy that explains returns and detects market regimes (normal/bubble/panic).
 
-**Statut : projet de recherche en cours — étudiant en L3 économie internationale.**
-Ce n'est pas un outil de trading en production. C'est un exercice de recherche appliquée en économétrie financière, pensé pour être honnête sur ses limites plutôt qu'impressionnant sur le papier.
+**Status: ongoing research project — undergraduate student in International Economics.**
+This is not a production trading tool. It's an applied econometrics research exercise, meant to be honest about its limitations rather than impressive on paper.
 
-## Pourquoi ce projet
+## Why this project
 
-[À rédiger : 2-3 phrases sur la question de recherche — pourquoi la volatilité/peur du marché FX t'intéresse, dans le prolongement de ton cursus en économie internationale / commerce international / économie monétaire internationale.]
+I first encountered risk aversion in microeconomics — a stable individual preference in expected utility theory. But financial markets clearly don't behave as if risk perception were constant: volatility spikes, sentiment shifts, and markets swing between calm and panic. This raised a question that microeconomic theory alone doesn't fully answer: can this *time-varying* market-wide risk perception — closer to behavioral finance than to classical risk aversion — be measured quantitatively on the FX market, the most liquid market in the world? And if so, can it help explain returns and produce a usable price range rather than a purely qualitative narrative?
 
-## Question de recherche
+This project is also a way to apply what I'm building in Econometrics and Statistical Decision-Making during my International Economics degree at FASEG, University of Lomé — and it connects naturally to my coursework in International Trade and International Monetary Economics, since FX markets sit at the intersection of both.
 
-Peut-on mesurer, de façon quantitative et testable statistiquement, un déplacement comportemental du marché des changes (aversion au risque / peur) — plutôt que de le décrire seulement qualitativement — et en tirer un signal d'aide à la décision, y compris une détection de régime de marché en temps réel ?
+## Research question
 
-**Ce que ce modèle NE prétend PAS faire** : prédire la direction future des prix avec certitude. L'objectif est d'aider la prise de décision, pas de garantir un résultat — voir la section Limites.
+Can a time-varying, market-wide risk perception on the foreign exchange market be measured quantitatively and tested statistically — rather than only described qualitatively — and used to help explain returns and detect market regimes in real time?
 
-## Méthodologie (résumé)
+**What this model does NOT claim to do**: predict future price direction with certainty. The goal is to support decision-making, not guarantee an outcome — see the Limitations section.
 
-1. Modélisation des rendements log EUR/USD (pas les prix bruts, pour éviter la non-stationnarité)
-2. Construction d'un proxy de volatilité/peur propre au marché FX, faute d'accès aux indices propriétaires (CVIX, JPMorgan VXY) — voir `docs/methodology.md` pour le raisonnement complet
-3. Calibration d'un modèle GARCH(1,1) pour isoler le choc de volatilité de son inertie mécanique
-4. [À compléter au fur et à mesure : régression, détection de régime HMM/Markov-switching]
+## Methodology (summary)
 
-Le raisonnement détaillé, y compris les choix écartés et pourquoi, est documenté dans [`docs/methodology.md`](docs/methodology.md).
+1. Modeling EUR/USD log returns (not raw prices, to avoid non-stationarity issues)
+2. Building a proprietary FX volatility/fear proxy, since access to proprietary indices (CVIX, JPMorgan VXY) is not available
+3. Calibrating a GARCH(1,1) model to isolate the volatility shock from its mechanical inertia (clustering)
+4. [To be completed as the project progresses: regression specification, regime detection via HMM / Markov-switching]
 
-## Structure du repo
+The full reasoning, including discarded options and why, is documented in [`docs/methodology.md`](docs/methodology.md).
+
+## Repo structure
 
 ```
 fx-vol-regime-model/
 ├── data/
-│   ├── raw/              # données brutes téléchargées, jamais modifiées
-│   └── processed/        # rendements log, séries nettoyées
+│   ├── raw/              # raw downloaded data, never modified
+│   └── processed/        # log returns, cleaned series
 ├── src/
-│   ├── data_loader.py    # téléchargement/nettoyage des données
-│   ├── features.py       # calcul rendements, transformations de la variable de volatilité
-│   ├── garch_model.py    # calibration GARCH, extraction des chocs
-│   └── regression.py     # spécification économétrique r(t+1) = ...
+│   ├── data_loader.py    # data download/cleaning
+│   ├── features.py       # returns computation, volatility variable transformations
+│   ├── garch_model.py    # GARCH calibration, shock extraction
+│   └── regression.py     # econometric specification r(t+1) = ...
 ├── docs/
-│   └── methodology.md    # journal méthodologique détaillé (décisions, corrections, raisonnement)
+│   └── methodology.md    # detailed methodological log (decisions, corrections, reasoning)
 ├── requirements.txt
 └── README.md
 ```
 
-## Sources de données
+## Data sources
 
-- [Yahoo Finance](https://finance.yahoo.com) (`EURUSD=X`, via `yfinance`) — clôtures journalières
-- [FRED](https://fred.stlouisfed.org) (série DEXUSEU) — pour coupler avec des données macro US
-- [ECB Statistical Data Warehouse](https://data.ecb.europa.eu) — taux de référence officiels
+- [Yahoo Finance](https://finance.yahoo.com) (`EURUSD=X`, via `yfinance`) — daily closing prices
+- [FRED](https://fred.stlouisfed.org) (DEXUSEU series) — for pairing with US macro data
+- [ECB Statistical Data Warehouse](https://data.ecb.europa.eu) — official reference rates
 
-## Limites connues et assumées
+## Known and acknowledged limitations
 
-- Le proxy de volatilité utilisé est une **volatilité réalisée/conditionnelle** (GARCH), pas une **volatilité implicite** — il ne capture pas les anticipations du marché, contrairement à un indice comme le CVIX (inaccessible sans accès Bloomberg/Refinitiv)
-- Le lien de causalité entre volatilité et rendement futur reste à tester rigoureusement (risque de simultanéité)
-- Le modèle est calibré sur données journalières uniquement, faute d'accès à des données intraday de qualité
+- The volatility proxy used is a **realized/conditional volatility** (GARCH), not an **implied volatility** — it does not capture market expectations, unlike an index such as the CVIX (inaccessible without Bloomberg/Refinitiv access)
+- The causal link between volatility and future returns still needs rigorous testing (simultaneity risk)
+- The model is calibrated on daily data only, due to lack of access to quality intraday data
 
-## Reproduire
+## Reproduce
 
 ```bash
 git clone [url]
@@ -62,8 +64,9 @@ cd fx-vol-regime-model
 pip install -r requirements.txt
 ```
 
-[Instructions d'exécution à compléter une fois les scripts écrits]
+[Run instructions to be completed once the scripts are written]
 
-## Auteur
+## Author
 
-[Ton nom / pseudo GitHub] — étudiant en L3 Économie Internationale, FASEG, Université de Lomé.
+[ZEWU Yawo Armand Isaac / Armando-ZEWU] — Undergraduate student in International Economics, FASEG, University of Lomé.
+

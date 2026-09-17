@@ -170,6 +170,43 @@ Three things are now established together:
 (|r(t+1)|) or about the market-regime detection objective — both remain
 open, separate questions per `methodology.md` section 7.
 
+### 6.1 What the two control coefficients mean economically
+
+**diff_rate (coef = 0.0100, p = 0.257)**: economic theory (uncovered
+interest rate parity, UIP) predicts a relationship between the interest
+rate differential and expected currency returns. Taking this coefficient
+at face value despite its lack of significance: a 1 percentage point
+widening of the Fed-ECB rate differential (a fairly large policy move,
+larger than most single rate decisions) would be associated with only a
+0.01% shift in next-day expected return — an effect too small to matter
+economically even before considering that it is statistically
+indistinguishable from zero. This null result is not an anomaly specific
+to this project: it echoes a well-known puzzle in international finance
+(the "forward premium puzzle" / Fama, 1984), where UIP frequently fails to
+hold, or holds with an unexpected sign, in short-horizon empirical tests.
+This project's finding is consistent with that broader, decades-old
+literature rather than contradicting it.
+
+**r_dxy (coef = 0.8591, p = 0.865)**: the coefficient's 95% confidence
+interval runs from about -9.0 to +10.7. In plain terms, this range is
+consistent with everything from "the dollar index and next-day EUR/USD
+returns move strongly against each other" to "they move strongly
+together" to "there is no relationship at all" — the data at this daily
+horizon simply do not pin down the relationship in either direction. This
+is a materially different (and more informative) statement than just
+"not significant": it says the estimate carries essentially no usable
+precision, not merely a small or moderate one.
+
+**Practical takeaway for someone building on this model**: at a one-day
+horizon, neither the rate differential nor broad dollar strength provide a
+usable directional signal for EUR/USD, over and above what is already
+known (nothing) from the volatility shock and momentum terms alone. This
+does not mean these variables are economically irrelevant to exchange
+rates in general — the literature is clear that they matter at other
+horizons and in other specifications — only that, in this specific
+one-day-ahead, level/return specification, they add no exploitable
+information.
+
 ## 7. Files produced at this stage
 
 - `src/control_variables_loader.py` — FRED loaders for `DFF`, `ECBDFR`,

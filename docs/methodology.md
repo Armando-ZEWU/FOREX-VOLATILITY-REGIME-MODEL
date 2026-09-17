@@ -1,12 +1,14 @@
 # Modèle quantitatif FX — Synthèse méthodologique
-*Document de travail — v2, mise à jour après la spécification du GARCH(1,1)*
+*Document de travail — v3, mise à jour après la détection de régime (HMM) et l'ajout d'interprétations économiques dans tous les journaux détaillés*
 
 ## 1. Objectif du projet
 
 Construire un modèle quantitatif pour le marché du Forex (EUR/USD comme cas d'étude), avec une double ambition :
 
 - **(a)** Mesurer de façon quantitative et testable statistiquement un déplacement comportemental du marché (peur/aversion au risque), plutôt que de le décrire qualitativement comme le fait une partie de la littérature de finance comportementale.
-- **(b)** En tirer un usage opérationnel potentiel : signal d'aide à la décision (pas de prédiction certaine), et détection de régime de marché (normal / bulle / panique) en temps réel.
+- **(b)** En tirer un usage opérationnel potentiel : signal d'aide à la décision (pas de prédiction certaine), et détection de régime de marché en temps réel.
+
+**Révision du framing initial (b)** : l'objectif parlait initialement de régimes "normal / bulle / panique". Ce framing a été révisé lors de l'implémentation (voir `docs/regime_hmm.md`, section 1) : une bulle spéculative se caractérise typiquement par une phase de construction à volatilité *basse*, pas haute — un modèle de volatilité seul ne peut donc pas distinguer "marché calme normal" de "bulle en formation", les deux ayant la même signature de faible volatilité. Les régimes réellement détectés sont donc labellisés **"faible / normale / forte volatilité (stress-panique)"**, une distinction honnête sur ce que le modèle peut réellement mesurer.
 
 **Avertissement méthodologique assumé** : le modèle n'a pas la prétention de prédire l'avenir avec certitude. L'objectif est d'aider à la prise de décision, pas de garantir un résultat.
 
@@ -107,7 +109,11 @@ Le résidu standardisé de ce modèle constitue la variable ΔY(t) opérationnel
 - [x] Estimer une régression simple r(t+1) = α + β₁·ΔY(t) + β₂·r(t) + u(t), sans variable de contrôle — fait, résultat nul (aucun coefficient significatif, R²=0.001), voir `docs/regression_baseline.md`
 - [x] Formaliser les variables de contrôle (différentiel de taux, DXY, etc.) et les ajouter à la régression, en comparant β₁ avant/après leur ajout — fait, résultat robuste : β₁ quasi inchangé (-0,1329 → -0,1308), aucune variable significative, AIC/BIC se dégradent avec l'ajout des contrôles. Confirme, sans preuve de confusion, le résultat nul de la baseline. Voir `docs/control_regression.md`.
 - [x] Tester si ΔY(t) explique la magnitude du rendement, |r(t+1)|, plutôt que sa direction — fait, résultat positif et robuste sur σ(t) en niveau (R²=0,090, p<0,001), mais nettement plus faible sur ΔY(t) (variation log, non significatif) — la transformation en variation dilue le signal par rapport au niveau. Résultat interprété comme validation de cohérence du GARCH, pas comme découverte nouvelle, et utilisable pour l'objectif (b) (fourchette de prix ajustée à la volatilité). Voir `docs/magnitude_regression.md`.
-- [ ] Aborder la détection de régime (HMM vs Markov-Switching GARCH) pour classer normal/bulle/panique — dernière étape, indépendante des résultats de régression sur la direction
-- [ ] Tester la stabilité temporelle du GARCH par sous-périodes (limite identifiée en section 5.2)
+- [x] Aborder la détection de régime (HMM vs Markov-Switching GARCH) pour classer les régimes de volatilité — fait, via un HMM gaussien à 3 états sur log(σ(t)). Première tentative dégénérée (deux états quasi identiques, bascule quotidienne artificielle) diagnostiquée et corrigée par redémarrages multiples (8/10 convergent vers l'optimum global). Régimes finaux bien séparés et persistants (durées moyennes ~72 à ~127 jours selon le régime). Limite documentée : hérite de l'instabilité du GARCH global (voir ci-dessus) ; argument renforcé pour un futur Markov-Switching GARCH. Voir `docs/regime_hmm.md`.
+- [x] Tester la stabilité temporelle du GARCH par sous-périodes (limite identifiée en section 5.2) — fait, sur 5 sous-périodes égales (835 obs. chacune). Résultat : instabilité confirmée, la persistance (α+β) varie substantiellement selon la période (demi-vie ~65 à ~335 jours, hors artefact numérique d'une période proche de la frontière IGARCH). Renforce l'argument pour un Markov-Switching GARCH plutôt qu'un simple HMM à l'étape suivante. Voir `docs/garch_stability.md`.
 
 **Note méthodologique sur l'ordre retenu** : la régression simple a précédé l'ajout des contrôles pour éviter un problème de confusion (évite d'attribuer à ΔY(t) un effet qui viendrait en réalité d'une variable corrélée). Entre magnitude et contrôles, l'ordre retenu est : contrôles d'abord (pour clore complètement la question de la direction avant de pivoter vers une nouvelle cible), magnitude ensuite, régime en dernier.
+
+## 8. Exigence transversale : interprétation économique dans chaque journal
+
+Chaque document détaillé (`GARCH_1_1.md`, `regression_baseline.md`, `control_regression.md`, `magnitude_regression.md`, `regime_hmm.md`) inclut désormais une section d'interprétation économique explicite — ce que les résultats signifient concrètement pour quelqu'un qui observe le marché, avec exemples chiffrés à l'appui (ex. probabilités de queue calculées pour illustrer l'importance des queues épaisses dans `GARCH_1_1.md`, taille d'effet économique des coefficients non significatifs dans `regression_baseline.md`/`control_regression.md`). Cette exigence a été ajoutée après coup à des documents déjà rédigés uniquement en termes statistiques — un référee doit pouvoir comprendre l'implication économique sans devoir traduire lui-même les coefficients et p-values.

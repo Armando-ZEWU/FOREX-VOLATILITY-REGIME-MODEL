@@ -103,6 +103,36 @@ that measurement; it returning null is itself a valid, documented finding,
 not a reason to keep adding variables until something becomes significant
 (a p-hacking risk explicitly avoided here).
 
+### 6.1 What this means economically — even setting statistical significance aside
+
+Beyond the p-values, it is worth asking a separate, more concrete
+question: even *if* these coefficients reflected a real relationship,
+would the effect be large enough to matter to anyone actually trading or
+managing risk on EUR/USD? The answer is no, on both counts.
+
+- **delta_y_t (coef = -0.1546)**: a day-to-day log-change in GARCH
+  volatility of a typical, unremarkable size (on the order of ±0.05 to
+  ±0.20, well within the range seen in `data/processed/eurusd_garch_shocks.csv`
+  on an ordinary day) would shift the *point estimate* of tomorrow's
+  predicted return by roughly -0.008% to -0.031% — smaller than typical
+  EUR/USD bid-ask spreads and transaction costs on any real trading venue.
+  Even taking the coefficient at face value (ignoring that it is not
+  statistically distinguishable from zero, p = 0.519), the implied economic
+  effect is too small to act on.
+- **r_t (coef = 0.0206)**: similarly, a typical prior-day return of ±0.5%
+  (the sample's approximate standard deviation, `GARCH_1_1.md` section 3)
+  would shift tomorrow's predicted return by about ±0.01% — again,
+  economically negligible on its own.
+
+**In plain terms for someone watching the market**: knowing that
+volatility jumped yesterday, or which way the price moved yesterday, gives
+no usable edge — statistically or economically — for guessing whether
+EUR/USD will go up or down tomorrow. Anyone building a directional
+day-trading rule on either of these two inputs alone would, on this
+evidence, expect to do no better than guessing — the well-known "no free
+lunch" conclusion of market efficiency, illustrated here with this
+project's own numbers rather than asserted in the abstract.
+
 ## 7. What this does NOT settle
 
 - Whether ΔY(t) explains return **magnitude** (|r(t+1)|) rather than

@@ -104,9 +104,10 @@ Le résidu standardisé de ce modèle constitue la variable ΔY(t) opérationnel
 
 - [x] Spécifier le GARCH(1,1) sur les rendements log journaliers EUR/USD (librairie `arch`, Python) — fait, voir section 5 et `docs/GARCH_1_1.md`
 - [x] Extraire le résidu standardisé (le "choc") de la vol conditionnelle estimée — fait
-- [ ] Estimer une régression simple r(t+1) = α + β₁·ΔY(t) + β₂·r(t) + u(t), sans variable de contrôle, pour obtenir une baseline du pouvoir explicatif du choc de volatilité seul
-- [ ] Formaliser les variables de contrôle (différentiel de taux, DXY, etc.) et les ajouter à la régression, en comparant β₁ avant/après leur ajout
-- [ ] Aborder la détection de régime (HMM vs Markov-Switching GARCH) pour classer normal/bulle/panique
+- [x] Estimer une régression simple r(t+1) = α + β₁·ΔY(t) + β₂·r(t) + u(t), sans variable de contrôle — fait, résultat nul (aucun coefficient significatif, R²=0.001), voir `docs/regression_baseline.md`
+- [x] Formaliser les variables de contrôle (différentiel de taux, DXY, etc.) et les ajouter à la régression, en comparant β₁ avant/après leur ajout — fait, résultat robuste : β₁ quasi inchangé (-0,1329 → -0,1308), aucune variable significative, AIC/BIC se dégradent avec l'ajout des contrôles. Confirme, sans preuve de confusion, le résultat nul de la baseline. Voir `docs/control_regression.md`.
+- [x] Tester si ΔY(t) explique la magnitude du rendement, |r(t+1)|, plutôt que sa direction — fait, résultat positif et robuste sur σ(t) en niveau (R²=0,090, p<0,001), mais nettement plus faible sur ΔY(t) (variation log, non significatif) — la transformation en variation dilue le signal par rapport au niveau. Résultat interprété comme validation de cohérence du GARCH, pas comme découverte nouvelle, et utilisable pour l'objectif (b) (fourchette de prix ajustée à la volatilité). Voir `docs/magnitude_regression.md`.
+- [ ] Aborder la détection de régime (HMM vs Markov-Switching GARCH) pour classer normal/bulle/panique — dernière étape, indépendante des résultats de régression sur la direction
 - [ ] Tester la stabilité temporelle du GARCH par sous-périodes (limite identifiée en section 5.2)
 
-**Note méthodologique sur cet ordre** : la régression simple précède l'ajout des contrôles pour éviter un problème de confusion — si β₁ ressort significatif dès la version simple, l'ajout de contrôles corrélés (DXY, taux) plus tard permettra de vérifier si ce pouvoir explicatif est réel ou capté indirectement par une autre variable.
+**Note méthodologique sur l'ordre retenu** : la régression simple a précédé l'ajout des contrôles pour éviter un problème de confusion (évite d'attribuer à ΔY(t) un effet qui viendrait en réalité d'une variable corrélée). Entre magnitude et contrôles, l'ordre retenu est : contrôles d'abord (pour clore complètement la question de la direction avant de pivoter vers une nouvelle cible), magnitude ensuite, régime en dernier.

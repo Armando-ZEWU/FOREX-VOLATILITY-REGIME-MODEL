@@ -117,3 +117,13 @@ tryCatch({
 })
 
 cat("\nDone. Review all printed output above before proceeding.\n")
+
+# ---- 8. Persist only the plain-numeric estimates (NOT the fit/spec object) ----
+# fit$par, fit$loglik, fit$Inference$MatCoef sont de purs objets R (vecteur/liste/matrice).
+# fit$spec porte un pointeur externe (module Rcpp) qui devient invalide après reload --
+# on ne le sauvegarde jamais.
+saveRDS(
+  list(par = fit$par, loglik = fit$loglik, MatCoef = fit$Inference$MatCoef),
+  "../data/processed/ms_garch_par.rds"
+)
+cat("\nParamètres sauvegardés dans ms_garch_par.rds (par numérique uniquement).\n")

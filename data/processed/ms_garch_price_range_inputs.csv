@@ -1,2 +1,2 @@
-"last_date","confidence_level","return_q_low","return_q_high","vol_forecast","prob_regime_1_current","prob_regime_2_current"
-2026-09-11,0.95,NA,NA,0.30551090389299,0.994356565854256,0.00564343414574409
+"last_date","last_price","confidence_level","return_q_low","return_q_high","vol_forecast","prob_regime_1_current","prob_regime_2_current"
+2026-09-11,1.1604,0.95,-0.614283646618916,0.60612404614478,0.30551090389299,0.994356565854256,0.00564343414574409

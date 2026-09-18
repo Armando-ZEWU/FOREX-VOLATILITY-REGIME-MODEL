@@ -68,6 +68,25 @@ data <- read.csv("../data/processed/eurusd_log_returns.csv", stringsAsFactors = 
 returns <- data$log_return
 dates <- as.Date(data$Date)
 
+# Also load the raw price series: the last price is needed to convert the
+# forecast return interval into an actual price range. Exported in the
+# same CSV as the forecast (rather than re-read separately in Python) so
+# that price and forecast date are guaranteed consistent by construction --
+# if the two files were ever reloaded out of sync, a separately-read price
+# could silently belong to a different date than the forecast.
+prices_raw <- read.csv("../data/raw/eurusd_daily.csv", stringsAsFactors = FALSE)
+prices_raw$Date <- as.Date(prices_raw$Date)
+last_forecast_date <- tail(dates, 1)
+last_price <- prices_raw$Close[prices_raw$Date == last_forecast_date]
+
+if (length(last_price) != 1) {
+  stop(paste("Could not uniquely match the last return date",
+             format(last_forecast_date), "to a price in eurusd_daily.csv --",
+             "found", length(last_price), "matches. Check that both files",
+             "are generated from the same data pull."))
+}
+cat("Last price (", format(last_forecast_date), "):", last_price, "\n")
+
 cat("Loaded", length(par), "fitted parameters and", length(returns), "observations.\n")
 
 # ---- 2. Current regime probabilities (context for the forecast) ----
@@ -77,47 +96,87 @@ pred_prob_now <- state_probs_obj$PredProb[dim(state_probs_obj$PredProb)[1], 1, ]
 cat("\n=== Current regime probabilities (as of the last observation) ===\n")
 print(pred_prob_now)
 
-# ---- 3. One-step-ahead forecast (95% interval, as decided) ----
-# METHODOLOGICAL CHOICE: predict() with do.return.draw=TRUE simulates from
-# the FULL predictive distribution, which already properly weights both
-# regimes by their current predicted probability (pred_prob_now above) --
-# the operationally correct approach, since the model treats the current
-# regime as uncertain (a probability), not a known fact. We deliberately
-# do NOT force an artificial "assume we are certainly in regime k"
-# forecast, which would misrepresent the genuine uncertainty the model
-# itself carries.
-#
+# ---- 3. Volatility forecast ----
 # SPEC-dispatched method: predict(object, newdata=NULL, ..., par=NULL, ...)
 # -- argument name is `newdata`, NOT `data` (unlike State() above).
-
-set.seed(42)
-confidence_level <- 0.95  # as decided: 95%, the standard choice
-alpha_tail <- (1 - confidence_level) / 2  # 0.025 on each side
-
-cat("\nGenerating 1-step-ahead forecast (simulated draws from full predictive distribution)...\n")
+#
+# NOTE: in this version of MSGARCH, predict() returns only $vol (the
+# conditional volatility forecast) -- do.return.draw=TRUE did NOT produce
+# a $draw element, so quantiles cannot be computed from it (this was
+# observed empirically: the earlier version of this script silently
+# produced NA bounds because it tried to take quantiles of a non-existent
+# $draw field). The interval is therefore obtained from Risk() below,
+# which is the package's purpose-built function for predictive-density
+# quantiles.
+cat("\nGenerating 1-step-ahead volatility forecast...\n")
 forecast_1step <- predict(
   object = spec,
   par = par,
   newdata = returns,
+  nahead = 1L
+)
+vol_forecast <- as.numeric(forecast_1step$vol)
+cat("Volatility forecast (model-implied, regime-weighted):", vol_forecast, "\n")
+
+# ---- 4. 95% predictive interval via Risk() ----
+# METHODOLOGICAL CHOICE: Risk() computes quantiles of the FULL predictive
+# density, which already properly weights both regimes by their current
+# predicted probability (pred_prob_now above) -- the operationally correct
+# approach, since the model treats the current regime as uncertain (a
+# probability), not a known fact. We deliberately do NOT force an
+# artificial "assume we are certainly in regime k" forecast, which would
+# misrepresent the genuine uncertainty the model itself carries.
+#
+# CONVENTION WARNING: Risk()'s `alpha` argument gives LEFT-TAIL levels
+# (Value-at-Risk levels), not a two-sided confidence level. For a
+# two-sided 95% interval we therefore need alpha = c(0.025, 0.975):
+# the 2.5% quantile is the lower bound, the 97.5% quantile the upper.
+# Passing alpha = 0.05 alone would give a one-sided 5% VaR, NOT a 95%
+# interval -- an easy and consequential mistake.
+#
+# SPEC-dispatched method: Risk(object, par, data, alpha, nahead, ...)
+# -- argument name is `data` here (like State(), unlike predict()).
+
+set.seed(42)
+confidence_level <- 0.95  # as decided: 95%, the standard choice
+alpha_lower <- (1 - confidence_level) / 2   # 0.025
+alpha_upper <- 1 - alpha_lower              # 0.975
+
+cat("\nComputing 95% predictive interval via Risk()...\n")
+risk_obj <- Risk(
+  object = spec,
+  par = par,
+  data = returns,
+  alpha = c(alpha_lower, alpha_upper),
   nahead = 1L,
-  do.return.draw = TRUE
+  do.es = FALSE,
+  do.its = FALSE
 )
 
-cat("\n=== Structure of predict() output (inspect before trusting extraction below) ===\n")
-str(forecast_1step)
+cat("\n=== Structure of Risk() output (inspect before trusting extraction below) ===\n")
+str(risk_obj)
 
 tryCatch({
-  draws <- forecast_1step$draw  # ADJUST field name if str() above shows otherwise
-  q_low <- quantile(draws, probs = alpha_tail)
-  q_high <- quantile(draws, probs = 1 - alpha_tail)
-  vol_forecast <- forecast_1step$vol
+  # VaR is a matrix of size nahead x R (here 1 x 2), columns in the order
+  # of the alpha vector passed above.
+  var_values <- as.numeric(risk_obj$VaR)
+  q_low <- var_values[1]   # 2.5% quantile -> lower bound
+  q_high <- var_values[2]  # 97.5% quantile -> upper bound
   
   cat("\n=== 1-step-ahead forecast (log-return %, matching features.py's x100 scale) ===\n")
-  cat("Volatility forecast (model-implied, regime-weighted):", vol_forecast, "\n")
+  cat("Volatility forecast:", vol_forecast, "\n")
   cat(sprintf("%.0f%% interval: [%.4f, %.4f]\n", confidence_level * 100, q_low, q_high))
   
+  # Sanity check: the interval must bracket zero and be correctly ordered,
+  # otherwise the alpha convention was misread (see CONVENTION WARNING).
+  if (q_low >= q_high) {
+    cat("\nWARNING: lower bound >= upper bound -- check the alpha convention\n")
+    cat("and the column ordering of risk_obj$VaR before using these numbers.\n")
+  }
+  
   forecast_output <- data.frame(
-    last_date = tail(dates, 1),
+    last_date = last_forecast_date,
+    last_price = last_price,
     confidence_level = confidence_level,
     return_q_low = q_low,
     return_q_high = q_high,
@@ -129,7 +188,7 @@ tryCatch({
   cat("\nForecast inputs saved to ms_garch_price_range_inputs.csv --\n")
   cat("to be converted into an actual EUR/USD price range in Python (price_range.py).\n")
 }, error = function(e) {
-  cat("\nERROR extracting forecast -- structure differs from assumed.\n")
+  cat("\nERROR extracting risk quantiles -- structure differs from assumed.\n")
   cat("Error message:", conditionMessage(e), "\n")
-  cat("Check the str() output above and adjust the field names manually.\n")
+  cat("Check the str() output above and adjust the extraction manually.\n")
 })

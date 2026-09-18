@@ -1,4 +1,4 @@
-# Markov-Switching GARCH (K=2)
+﻿# Markov-Switching GARCH (K=2)
 
 *Companion document to `methodology.md`, `docs/GARCH_1_1.md`,
 `docs/garch_stability.md`, and `docs/regime_hmm.md`. This document covers
@@ -17,14 +17,8 @@ implementation is the R package **MSGARCH** (Ardia, Bluteau, Boudt,
 Catania, Trottier, 2019, *Journal of Statistical Software*), built in
 C++/Rcpp.
 
-This is not merely a tooling gap. True MS-GARCH estimation faces a genuine
-theoretical difficulty, documented since Hamilton & Susmel (1994) and Gray
-(1996): the conditional variance in a given regime depends, in principle,
-on the **entire history of regime paths** since the start of the series
-(because σ²(t) depends on σ²(t−1), which itself depended on whichever
-regime was active at t−1, and so on) — making the exact likelihood
-computationally intractable beyond a handful of observations. Practical
-implementations, including MSGARCH, rely on an approximation (Gray's 1996
+This is not merely a tooling gap. True MS-GARCH estimation faces a genuine theoretical difficulty, documented since Hamilton & Susmel (1994) and Haas, Mittnik & Paolella (2004a): the conditional variance in a given regime depends, in principle, on the **entire history of regime paths** since the start of the series(because σ²(t) depends on σ²(t−1), which itself depended on whichever regime was active at t−1, and so on) — making the exact likelihood computationally intractable beyond a handful of observations. 
+Practical implementations, including MSGARCH, rely on an approximation (Haas, Mittnik & Paolella (2004a)
 "collapsing" procedure) to make estimation feasible at all. Even the
 reference tool is working with an approximation, not an exact model.
 
@@ -280,3 +274,4 @@ Bringing sections 4-6 together into plain economic terms:
 - `data/processed/ms_garch_transition_matrix.csv`
 - `data/processed/ms_garch_regime_probs.csv` — per-day smoothed
   probabilities for both regimes, aligned with EUR/USD trading dates
+

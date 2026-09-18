@@ -70,36 +70,33 @@ if __name__ == "__main__":
     print(f"  Width: {(p_max - p_min):.4f} "
           f"({(p_max - p_min) / last_price:.2%} of current price)")
 
-    # ---- Illustrative comparison: what if we assumed each regime with
-    # certainty, instead of using the model's actual mixture? ----
-    # NOT the operational range (see ms_garch_forecast.R's methodological
-    # choice) -- shown only to make the value of regime-awareness visible,
-    # using each regime's own long-run volatility level from docs/ms_garch.md
-    # section 4.2, scaled to match the same ~2.0x-vol multiplier implied by
-    # the actual Risk() interval (rather than re-deriving a full per-regime
-    # Student's t quantile, which would need each regime's own nu and
-    # h=1 conditional vol -- an approximation, clearly labeled as such).
-    implied_multiplier_low = inputs["return_q_low"] / inputs["vol_forecast"]
-    implied_multiplier_high = inputs["return_q_high"] / inputs["vol_forecast"]
+    # ---- TRUE regime-conditional comparison (Haas et al. 2004a recursion) ----
+    # Replaces the earlier "illustrative only" approximation, which used each
+    # regime's long-run volatility level and the mixture's quantile multiplier.
+    # This version uses the ACTUAL one-step-ahead regime-conditional forecast
+    # (own sigma_k(t+1) and own nu_k per regime), computed in
+    # ms_garch_forecast.R section 6 and validated there against the Risk()
+    # mixture result (exact match on implied volatility: 0.3055 vs 0.3055).
+    regime_forecast = pd.read_csv(
+        "../data/processed/ms_garch_regime_conditional_forecast.csv"
+    )
+    target_cl = confidence_level  # match the operational confidence level (0.95)
+    regime_forecast_cl = regime_forecast[
+        np.isclose(regime_forecast["confidence_level"], target_cl)
+    ]
 
-    sigma_regime1 = 0.206  # long-run vol, low-vol regime (docs/ms_garch.md, 4.2)
-    sigma_regime2 = 0.730  # long-run vol, high-vol regime (docs/ms_garch.md, 4.2)
-
-    print("\n--- Illustrative only: range if each regime were assumed with certainty ---")
-    print("(approximation using each regime's long-run vol level and the same")
-    print(" quantile multiplier as the actual mixture forecast -- not the")
-    print(" model's actual per-regime forecast, which would require each")
-    print(" regime's own nu and h=1 conditional variance)")
-    for label, sigma in [("Low-volatility regime (calm)", sigma_regime1),
-                          ("High-volatility regime (stress)", sigma_regime2)]:
-        r_low_illustr = implied_multiplier_low * sigma
-        r_high_illustr = implied_multiplier_high * sigma
-        p_min_illustr, p_max_illustr = compute_price_range(
-            last_price, r_low_illustr, r_high_illustr
+    print("\n--- Regime-conditional forecast (exact, not illustrative) ---")
+    print("(if tomorrow were certainly in this regime -- not the operational")
+    print(" forecast, which correctly mixes both regimes by their current")
+    print(" probability, but a genuine per-regime forecast, not an approximation)")
+    for _, row in regime_forecast_cl.iterrows():
+        label = "Low-volatility regime (calm)" if row["regime"] == "1_calm" \
+            else "High-volatility regime (stress)"
+        p_min_r, p_max_r = compute_price_range(
+            last_price, row["return_q_low"], row["return_q_high"]
         )
-        width_pct = (p_max_illustr - p_min_illustr) / last_price
-        print(f"  {label}: [{p_min_illustr:.4f}, {p_max_illustr:.4f}] "
-              f"(width: {width_pct:.2%})")
+        width_pct = (p_max_r - p_min_r) / last_price
+        print(f"  {label}: [{p_min_r:.4f}, {p_max_r:.4f}] (width: {width_pct:.2%})")
 
     # Save the operational result
     result = pd.DataFrame([{

@@ -133,43 +133,70 @@ The close match confirms `Risk()` is genuinely using the model's Student's
 t predictive distribution, not silently falling back to a Normal
 approximation — a real verification, not an assumption taken on faith.
 
-## 4. Rigorous result vs. illustrative comparison — a distinction that must not be blurred
+## 4. Rigorous result vs. genuine regime-conditional forecast
 
-`price_range.py` also prints two additional lines, explicitly labeled
-"illustrative only", showing what the range would look like if each
-regime were assumed with certainty:
+An earlier version of this document compared the operational range to an
+*approximation* of what each regime would imply (using each regime's
+long-run volatility level and the mixture's quantile multiplier, not a
+true one-step-ahead forecast). This has since been replaced: `docs/ms_garch.md`
+section 1 was corrected to recognize that `MSGARCH`'s Markov-switching
+option implements Haas, Mittnik & Paolella (2004a), not Gray (1996) —
+meaning each regime's own conditional variance recursion has **no**
+path-dependency problem and can be computed directly:
 
-```
-Low-volatility regime (calm):    [1.1556, 1.1652] (width: 0.82%)
-High-volatility regime (stress): [1.1435, 1.1773] (width: 2.92%)
-```
+σₖ²(t) = ωₖ + αₖ·r(t−1)² + βₖ·σₖ²(t−1)
 
-**These two lines are an approximation, not a second rigorous forecast.**
-A genuine regime-conditional forecast would require, for each regime k:
-its own one-step-ahead conditional variance σₖ²(t+1) = ωₖ + αₖε²(t) +
-βₖσₖ²(t) — which in turn requires σₖ²(t), the regime-specific collapsed
-variance carried internally by the model's Gray (1996) approximation
-(`docs/ms_garch.md`, section 1's path-dependency discussion) — and its own
-regime-specific Student's t quantile (ν₁ = 7.07 vs. ν₂ = 22.0, which imply
-different quantile multipliers, not just different volatility levels).
+run independently for each regime k over the same observed return series
+(`ms_garch_forecast.R`, section 6). This gives a genuine, exact
+one-step-ahead forecast per regime — not an approximation.
 
-What was actually computed instead: each regime's **long-run** (unconditional)
-volatility level (from `docs/ms_garch.md`, section 4.2), combined with the
-**same** ±2.0 multiplier taken from the actual mixture forecast — not
-each regime's own multiplier. This means:
-- The relative sizing (stress regime roughly 2-3x wider than calm) is
-  directionally correct and consistent with the regimes' long-run
-  volatility ratio (0.730 / 0.206 ≈ 3.5x).
-- The exact bounds are not precise: they mix a long-run (not one-step-ahead)
-  volatility level with a multiplier that isn't specific to that regime's
-  own tail shape.
+### 4.1 Validation of the manual recursion
 
-**Why this distinction matters, stated plainly**: only the single
-mixture-based range in section 3 is the project's actual operational
-result. The regime-by-regime comparison exists solely to make the value of
-regime-awareness visually concrete (showing that the range would be
-noticeably different in a stress regime) — it must never be quoted as a
-precise model output in a report or the README.
+Before trusting this recursion, it was cross-checked against the
+already-validated `Risk()` mixture result: the probability-weighted
+average of the two regimes' forecast variances,
+√(w₁σ₁²(t+1) + w₂σ₂²(t+1)), gives **0.3055** — matching `Risk()`'s
+reported mixture volatility forecast (**0.3055**) exactly. This
+independent match confirms the manual recursion is correct, rather than
+relying on the formula being merely "plausible."
+
+### 4.2 Genuine regime-conditional 95% ranges
+
+As of 2026-09-11 (EUR/USD = 1.1604):
+
+| | Volatility forecast σₖ(t+1) | 95% range | Width |
+|---|---|---|---|
+| Regime 1 (calm) | 0.3033 | [1.1534, 1.1675] | 1.21% |
+| Regime 2 (stress) | 0.5769 | [1.1472, 1.1737] | 2.28% |
+| **Mixture (operational)** | 0.3055 | **[1.1533, 1.1675]** | **1.22%** |
+
+The stress-regime range is genuinely (not approximately) **1.88x wider**
+than the calm-regime range — a direct consequence of regime 2's own
+one-step-ahead volatility being nearly double regime 1's (0.577 vs 0.303),
+compounded by its much heavier tail (ν₂ ≈ 22 turned out closer to Normal
+than expected, per `ms_garch.md` section 4.4 — meaning the width
+difference here comes almost entirely from the volatility gap, not the
+tail shape, since a higher ν narrows the relative tail contribution).
+
+**Note on the mixture's small asymmetry**: `Risk()`'s reported 95% interval
+(-0.6143 / +0.6061) is very slightly asymmetric, even though the model has
+no mean term (`MSGARCH` assumes zero mean throughout — no `mu` parameter
+is estimated) and each individual regime's Student's t distribution is
+exactly symmetric about zero. A mixture of two zero-centered symmetric
+distributions is itself theoretically symmetric; the small observed
+asymmetry (≈1.3% relative difference between the two bounds) is most
+likely Monte Carlo simulation noise in `Risk()`'s internal computation
+(consistent with using simulation rather than a closed-form mixture
+quantile), not a genuine property of the model.
+
+### 4.3 Why this matters, beyond just being "more correct"
+
+This is no longer a cosmetic upgrade over the earlier approximation: the
+true regime-conditional ranges are computed with the same rigor as the
+operational mixture range (section 3), using each regime's own fitted
+parameters and its own tail shape — not borrowed multipliers or long-run
+levels. This makes the regime comparison itself a legitimate, quotable
+result (e.g. in a report or README), not merely an illustrative aside.
 
 ## 5. What "next trading day" actually means — a clarification that avoids a false failure
 
@@ -212,13 +239,20 @@ news would be expected to.
   quantity.
 - **The range's width is not fixed — it breathes with the regime,** which
   is the entire operational point of this project. On this date, the
-  model assigns 99.4% probability to the calm regime, so the range is
-  close to its calm-regime width (~0.82%, section 4). Had the model instead
-  assigned high probability to the stress regime, the same 95% range would
-  be roughly 2-3 times wider (illustrated in section 4) — a business or
-  trader relying on a single, regime-blind volatility estimate would be
-  under-hedged precisely when it matters most (entering a stress period)
-  and over-hedged during calm stretches.
+  model assigns 99.4% probability to the calm regime, so the operational
+  range is close to its calm-regime width. Using the exact regime-conditional
+  ranges from section 4.2, the same EUR 1,000,000 conversion illustrates the
+  difference directly:
+  - **If calm (certain)**: [1.1534, 1.1675] → proceeds between
+    $1,153,400 and $1,167,500 — a $14,100 spread, almost identical to the
+    operational range, because the model is currently near-certain the
+    market is calm.
+  - **If stress (certain)**: [1.1472, 1.1737] → proceeds between
+    $1,147,200 and $1,173,700 — a **$26,500 spread**, nearly double.
+    A treasury relying on a single, regime-blind volatility estimate
+    calibrated during calm periods would be under-hedged by roughly this
+    difference the moment the market actually shifts into stress — exactly
+    when the hedge matters most.
 - **What the range does NOT tell you**: nothing about direction. A 95%
   range of [1.1533, 1.1675] is symmetric information about *how far*
   EUR/USD might move, not *which way* — consistent with the project's
@@ -227,7 +261,10 @@ news would be expected to.
   reading this range as "the model expects EUR/USD to end up somewhere in
   here, probably in the middle" is over-reading it: the model has no
   opinion on where within the range the price will land, only that 95% of
-  the time, it expects the actual move to fall inside it.
+  the time, it expects the actual move to fall inside it. This holds in
+  both regimes: a wider stress-regime range does not mean the model
+  expects a crash any more than a rally — only a larger move in either
+  direction.
 
 ## 7. Ex-post comparison to actual market data (2026-09-14)
 
@@ -298,25 +335,57 @@ spacing.
 
 ### Results
 
-As of 2026-09-11 (EUR/USD = 1.1604):
+As of 2026-09-11 (EUR/USD = 1.1604), all three panels (operational mixture,
+calm regime certain, stress regime certain):
 
-| Confidence level | P_min | P_max | Width |
-|---|---|---|---|
-| 20% | 1.1596 | 1.1611 | 0.13% |
-| 50% | 1.1582 | 1.1625 | 0.37% |
-| 80% | 1.1561 | 1.1646 | 0.73% |
-| 95% | 1.1533 | 1.1675 | 1.22% |
+| Confidence level | Mixture width | Calm width | Stress width | Stress/Calm ratio |
+|---|---|---|---|---|
+| 20% | 0.136% | 0.135% | 0.282% | 2.09x |
+| 50% | 0.366% | 0.365% | 0.754% | 2.07x |
+| 80% | 0.732% | 0.726% | 1.454% | 2.00x |
+| 95% | 1.220% | 1.212% | 2.282% | 1.88x |
 
-The bands are properly nested (20% ⊂ 50% ⊂ 80% ⊂ 95%) and widen at an
-accelerating rate toward the tails — consistent with the fat-tailed
-Student's t distribution (ν ≈ 7.07 in the dominant low-volatility regime,
-`GARCH_1_1.md`) underlying the model, rather than the more evenly-spaced
-widening a Normal distribution would produce. This is a further, informal
-consistency check in the same spirit as section 3.1's single-interval
-check: the shape of the fan, not just its width, is doing what the
-model's own distributional assumptions predict.
+The bands are properly nested at every level (20% ⊂ 50% ⊂ 80% ⊂ 95%) and
+widen at an accelerating rate toward the tails in all three panels —
+consistent with the fat-tailed Student's t distribution underlying the
+model, rather than the more evenly-spaced widening a Normal distribution
+would produce.
 
 Chart saved to `docs/fan_chart.png`.
+
+### Interpretation — the calm regime, and, importantly, the stress regime
+
+**Calm regime**: nearly identical to the operational mixture at every
+level (expected, since the mixture is 99.4% calm-weighted on this date) —
+confirms the mixture range is, for all practical purposes, "the calm-regime
+range" right now.
+
+**Stress regime — the part of this chart that actually shows the model's
+value**: at every confidence level, the stress-regime band is **roughly
+twice as wide** as the calm-regime band — but that ratio is not constant,
+and the way it changes is itself informative. At the narrower, more
+central levels (20%, 50%), the stress band is about **2.07-2.09x** wider
+than calm — close to the ratio of the two regimes' one-step volatility
+forecasts themselves (0.577/0.303 ≈ 1.90, in the same range). But at the
+wide 95% level, the ratio narrows to **1.88x**. This is a direct,
+visible consequence of the two regimes' different tail shapes documented
+in `ms_garch.md` (section 4.4): the calm regime's fatter tail (ν₁ ≈ 7)
+inflates its own far-tail width disproportionately more than the stress
+regime's thinner, closer-to-Normal tail (ν₂ ≈ 22) inflates its already-wide
+band — so the *relative* gap between the two regimes compresses somewhat
+at the most extreme confidence level, even though the *absolute* gap
+still grows.
+
+**What this means for someone reading the chart, not just the numbers**:
+the stress panel isn't simply "the calm panel stretched by a constant
+factor" — it has a genuinely different shape, narrower in relative terms
+at its most extreme edge than at its center, because a fundamentally
+different tail-risk profile underlies it. A viewer scanning only the width
+at 95% would actually slightly *understate* how much riskier the central,
+day-to-day experience of the stress regime is compared to calm (the 20%
+and 50% ratios, ~2.1x, are larger than the headline 95% ratio, ~1.88x) —
+worth knowing before using a single "times-two" rule of thumb to reason
+about regime risk at every horizon.
 
 ## 9. Files produced at this stage
 

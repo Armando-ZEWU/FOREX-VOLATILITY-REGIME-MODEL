@@ -253,3 +253,89 @@ tryCatch({
   cat("\nERROR building fan chart data -- check risk_multi's structure above.\n")
   cat("Error message:", conditionMessage(e), "\n")
 })
+
+# ---- 6. TRUE regime-conditional one-step-ahead forecast ----
+# CORRECTION to docs/ms_garch.md section 1: that document cited Gray
+# (1996)'s "collapsing" approximation and an "infinite path dependency"
+# problem as the reason a per-regime forecast was hard to obtain. On
+# checking the literature directly, this was based on a misidentification
+# of which MS-GARCH variant the MSGARCH package's Markov-switching option
+# actually implements. Per the package's own documentation, it implements
+# Haas, Mittnik & Paolella (2004a), NOT Gray (1996) -- and Haas et al.'s
+# specification has NO path-dependency problem: each regime maintains its
+# own independent variance recursion based on observed data, computable
+# directly. This section does exactly that, replacing the "illustrative
+# only, approximate" regime comparison previously used in price_range.py.
+#
+# Recursion: sigma_k^2(t) = omega_k + alpha_k * r(t-1)^2 + beta_k * sigma_k^2(t-1)
+# run independently for k=1 and k=2 over the SAME observed return series.
+# Initialized at each regime's own unconditional (long-run) variance.
+
+cat("\n=== TRUE regime-conditional forecast (Haas et al. 2004a recursion) ===\n")
+
+omega_1 <- par["alpha0_1"]; alpha_1 <- par["alpha1_1"]; beta_1 <- par["beta_1"]; nu_1 <- par["nu_1"]
+omega_2 <- par["alpha0_2"]; alpha_2 <- par["alpha1_2"]; beta_2 <- par["beta_2"]; nu_2 <- par["nu_2"]
+
+cat(sprintf("Regime 1: omega=%.6f alpha=%.4f beta=%.4f nu=%.3f\n", omega_1, alpha_1, beta_1, nu_1))
+cat(sprintf("Regime 2: omega=%.6f alpha=%.4f beta=%.4f nu=%.3f\n", omega_2, alpha_2, beta_2, nu_2))
+
+Tn <- length(returns)
+sigma2_1 <- numeric(Tn)
+sigma2_2 <- numeric(Tn)
+sigma2_1[1] <- omega_1 / (1 - alpha_1 - beta_1)
+sigma2_2[1] <- omega_2 / (1 - alpha_2 - beta_2)
+
+for (t in 2:Tn) {
+  sigma2_1[t] <- omega_1 + alpha_1 * returns[t-1]^2 + beta_1 * sigma2_1[t-1]
+  sigma2_2[t] <- omega_2 + alpha_2 * returns[t-1]^2 + beta_2 * sigma2_2[t-1]
+}
+
+# One-step-ahead forecast (t = T+1) for each regime
+sigma2_1_next <- omega_1 + alpha_1 * returns[Tn]^2 + beta_1 * sigma2_1[Tn]
+sigma2_2_next <- omega_2 + alpha_2 * returns[Tn]^2 + beta_2 * sigma2_2[Tn]
+sigma_1_next <- sqrt(sigma2_1_next)
+sigma_2_next <- sqrt(sigma2_2_next)
+
+cat(sprintf("\nOne-step-ahead volatility forecast if regime 1 (calm): %.4f\n", sigma_1_next))
+cat(sprintf("One-step-ahead volatility forecast if regime 2 (stress): %.4f\n", sigma_2_next))
+
+# Regime-specific Student's t quantiles (standardized to unit variance:
+# raw Student's t has variance nu/(nu-2), so scale by sqrt((nu-2)/nu))
+std_t_quantile <- function(p, nu) qt(p, df = nu) * sqrt((nu - 2) / nu)
+
+regime_forecast <- data.frame()
+for (cl in confidence_levels) {
+  a_low <- (1 - cl) / 2
+  a_high <- 1 - a_low
+  regime_forecast <- rbind(regime_forecast, data.frame(
+    confidence_level = cl,
+    regime = "1_calm",
+    return_q_low = std_t_quantile(a_low, nu_1) * sigma_1_next,
+    return_q_high = std_t_quantile(a_high, nu_1) * sigma_1_next
+  ))
+  regime_forecast <- rbind(regime_forecast, data.frame(
+    confidence_level = cl,
+    regime = "2_stress",
+    return_q_low = std_t_quantile(a_low, nu_2) * sigma_2_next,
+    return_q_high = std_t_quantile(a_high, nu_2) * sigma_2_next
+  ))
+}
+regime_forecast$last_date <- last_forecast_date
+regime_forecast$last_price <- last_price
+write.csv(regime_forecast, "../data/processed/ms_garch_regime_conditional_forecast.csv", row.names = FALSE)
+print(regime_forecast)
+
+# ---- VALIDATION: does mixing these two regime-conditional forecasts,
+# weighted by current regime probabilities, approximately reproduce the
+# already-obtained Risk() mixture result? This cross-checks the manual
+# recursion above WITHOUT relying on any unverified assumption about
+# internal package objects -- if it matches, the recursion is confirmed
+# correct by an independent route. ----
+w1 <- as.numeric(pred_prob_now[1])
+w2 <- as.numeric(pred_prob_now[2])
+mixed_vol_approx <- sqrt(w1 * sigma2_1_next + w2 * sigma2_2_next)
+cat(sprintf("\nValidation check: weighted-average implied vol = %.4f\n", mixed_vol_approx))
+cat(sprintf("(compare to Risk()-based vol_forecast reported earlier: %.4f)\n", vol_forecast))
+cat("These won't match exactly (mixing variances isn't the same as mixing\n")
+cat("full quantile distributions), but should be in the same ballpark --\n")
+cat("a large discrepancy would indicate an error in the manual recursion.\n")

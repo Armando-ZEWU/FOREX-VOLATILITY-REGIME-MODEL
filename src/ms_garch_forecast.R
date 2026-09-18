@@ -192,3 +192,64 @@ tryCatch({
   cat("Error message:", conditionMessage(e), "\n")
   cat("Check the str() output above and adjust the extraction manually.\n")
 })
+
+# ---- 5. Multi-level predictive intervals for the fan chart ----
+# Central-bank-style fan chart (Bank of England convention): several
+# nested confidence bands rather than a single interval, to show how the
+# range narrows toward the center vs. widens toward the tails.
+#
+# Levels revised from an initial proposal of 5/15/20/30/60/80/95% (which
+# would have produced a near-invisible 5% band and two nearly
+# indistinguishable 15%/20% bands) to four well-separated levels, each
+# visually distinct on the resulting chart.
+confidence_levels <- c(0.20, 0.50, 0.80, 0.95)
+
+# Build the full alpha vector (lower and upper tail for every level),
+# passed to Risk() in a single call.
+alpha_pairs <- lapply(confidence_levels, function(cl) {
+  a_low <- (1 - cl) / 2
+  a_high <- 1 - a_low
+  c(a_low, a_high)
+})
+alpha_vector <- sort(unique(unlist(alpha_pairs)))
+cat("\nAlpha levels requested from Risk():", paste(alpha_vector, collapse=", "), "\n")
+
+risk_multi <- Risk(
+  object = spec,
+  par = par,
+  data = returns,
+  alpha = alpha_vector,
+  nahead = 1L,
+  do.es = FALSE,
+  do.its = FALSE
+)
+
+cat("\n=== Structure of multi-level Risk() output ===\n")
+str(risk_multi)
+
+tryCatch({
+  var_row <- as.numeric(risk_multi$VaR[1, ])
+  names(var_row) <- alpha_vector
+  
+  fan_rows <- lapply(confidence_levels, function(cl) {
+    a_low <- (1 - cl) / 2
+    a_high <- 1 - a_low
+    data.frame(
+      confidence_level = cl,
+      alpha_low = a_low,
+      alpha_high = a_high,
+      return_q_low = var_row[as.character(a_low)],
+      return_q_high = var_row[as.character(a_high)]
+    )
+  })
+  fan_df <- do.call(rbind, fan_rows)
+  fan_df$last_date <- last_forecast_date
+  fan_df$last_price <- last_price
+  
+  write.csv(fan_df, "../data/processed/ms_garch_fan_chart_inputs.csv", row.names = FALSE)
+  cat("\nFan chart inputs saved to ms_garch_fan_chart_inputs.csv\n")
+  print(fan_df)
+}, error = function(e) {
+  cat("\nERROR building fan chart data -- check risk_multi's structure above.\n")
+  cat("Error message:", conditionMessage(e), "\n")
+})

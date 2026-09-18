@@ -81,6 +81,36 @@ this pipeline: `State()` and `Risk()` take an argument named `data`;
   probability: pretending certainty would misrepresent the model's own
   honestly-carried uncertainty.
 
+### 2.5 Other decisions made in this stage, previously undocumented
+
+Flagged and corrected after an explicit audit of every choice made,
+following a direct request to leave nothing out:
+
+- **`last_price` is exported from R, not re-read separately in Python.**
+  The forecast script (`ms_garch_forecast.R`) reads the raw price file
+  itself and includes the matching price directly in the CSV it writes,
+  rather than letting `price_range.py` re-open `eurusd_daily.csv`
+  independently. Reason: if the two files were ever regenerated at
+  different times (e.g. new data pulled between running the R and Python
+  scripts), a separately-read price could silently belong to a different
+  date than the forecast. A `stop()` check in R enforces that the price
+  found matches the forecast's date exactly, failing loudly rather than
+  silently using a mismatched value.
+- **`do.es = FALSE` in the `Risk()` call.** Only the Value-at-Risk
+  quantiles were needed for the price range; Expected Shortfall (the
+  average loss beyond the VaR threshold) was not requested, since it
+  answers a different question (tail severity, not a two-sided range) not
+  part of this deliverable's scope.
+- **`set.seed(42)` before calling `Risk()`.** `Risk()`'s underlying
+  computation may involve simulation; a fixed seed makes the reported
+  quantiles exactly reproducible across runs, rather than varying by a
+  small amount each time the script is re-executed.
+- **An explicit sanity check (`q_low >= q_high` triggers a warning).**
+  Added defensively after the `alpha` convention trap (section 2.2) was
+  identified, specifically to catch a repeat of that kind of mistake
+  automatically rather than relying on manually re-checking the numbers
+  every time the script runs.
+
 ## 3. Results
 
 As of 2026-09-11 (EUR/USD = 1.1604):
@@ -170,15 +200,137 @@ rather than left for a reader to discover by watching the model "fail" on
 a Monday that was, in fact, behaving exactly as a model blind to weekend
 news would be expected to.
 
-## 6. Files produced at this stage
+## 6. Economic interpretation — what this range means for someone watching the market
+
+- **A 1.22%-wide range on a single day is a real, actionable number, not
+  an abstraction.** For a business converting a EUR 1,000,000 invoice into
+  USD, the range [1.1533, 1.1675] implies the dollar proceeds could
+  plausibly land anywhere between about $1,153,300 and $1,167,500 — a
+  swing of over $14,000 on a single day's exchange-rate uncertainty alone,
+  before any other business risk. This is the kind of number a treasury or
+  finance function would use to size a hedge, not just an academic
+  quantity.
+- **The range's width is not fixed — it breathes with the regime,** which
+  is the entire operational point of this project. On this date, the
+  model assigns 99.4% probability to the calm regime, so the range is
+  close to its calm-regime width (~0.82%, section 4). Had the model instead
+  assigned high probability to the stress regime, the same 95% range would
+  be roughly 2-3 times wider (illustrated in section 4) — a business or
+  trader relying on a single, regime-blind volatility estimate would be
+  under-hedged precisely when it matters most (entering a stress period)
+  and over-hedged during calm stretches.
+- **What the range does NOT tell you**: nothing about direction. A 95%
+  range of [1.1533, 1.1675] is symmetric information about *how far*
+  EUR/USD might move, not *which way* — consistent with the project's
+  earlier, robust finding that direction is not predictable at this
+  horizon (`regression_baseline.md`, `control_regression.md`). Anyone
+  reading this range as "the model expects EUR/USD to end up somewhere in
+  here, probably in the middle" is over-reading it: the model has no
+  opinion on where within the range the price will land, only that 95% of
+  the time, it expects the actual move to fall inside it.
+
+## 7. Ex-post comparison to actual market data (2026-09-14)
+
+This check was run specifically because a forecast is only as credible as
+its willingness to be checked against reality — not to claim a rigorous
+validation from a single observation (see the explicit caveat below).
+
+### 7.1 What actually happened
+
+Independent source (Pound Sterling Live daily EUR/USD history), for
+Monday 2026-09-14 (the next trading day after the 2026-09-11 forecast):
+
+| | Value |
+|---|---|
+| Open | 1.1597 |
+| Close | 1.1549 |
+| High | 1.1601 |
+| Low | 1.1523 |
+
+Forecast range: **[1.1533, 1.1675]**.
+
+### 7.2 Result
+
+Open, Close, and High all fall inside the forecast range. The intraday
+**Low (1.1523) falls just outside the lower bound**, by 0.0010 (≈0.086% of
+the reference price — about ten pips).
+
+**The most relevant comparison is to the Close (1.1549), not the intraday
+Low.** The GARCH model was calibrated on close-to-close log returns
+(`features.py`, `GARCH_1_1.md`) — it was never built to predict intraday
+extremes (the High-Low range within a single day), only the size of the
+close-to-close move. Judged against the quantity it was actually built to
+forecast, the Close falls comfortably inside the range: a genuine success
+on the model's own terms. The Low breaching the band is a data point about
+a different question (intraday range) that this model does not address —
+worth noting, not a failure of what was actually forecast.
+
+A minor, expected data discrepancy: this project's own pipeline recorded
+the 2026-09-11 reference price as 1.1604 (FRED's `DEXUSEU`), while this
+independent source reports a Close of 1.1599 for the same day — a ~0.05%
+difference, consistent with different providers snapshotting the rate at
+different times, not an error in either source.
+
+### 7.3 Critical caveat: this is one observation, not a validation
+
+**A single day proves essentially nothing about model calibration.** A
+correctly calibrated 95% interval is *expected* to be breached on
+roughly 1 day in 20 — a single in-range (or even a single out-of-range)
+result carries no statistical weight on its own. This comparison is
+recorded as an honest, concrete illustration of how the range performed
+once, not evidence that the model is well- or poorly-calibrated. A real
+calibration check would require accumulating many such observations over
+time (e.g., tracking the actual breach rate over dozens or hundreds of
+trading days and comparing it to the nominal 5%) — not attempted here.
+
+## 8. Fan chart: multiple confidence bands
+
+Extending the single 95% range to a Bank-of-England-style fan chart —
+several nested confidence bands computed in one `Risk()` call across the
+full alpha vector, converted to price bands and plotted in `fan_chart.py`.
+
+**Levels revised after an explicit reservation**: an initial proposal of
+5%, 15%, 20%, 30%, 60%, 80%, 95% was raised as producing a near-invisible
+5% band and two nearly indistinguishable 15%/20% bands. Revised to four
+well-separated levels — **20%, 50%, 80%, 95%** — each visually distinct on
+the resulting chart, consistent with conventional central-bank fan-chart
+spacing.
+
+### Results
+
+As of 2026-09-11 (EUR/USD = 1.1604):
+
+| Confidence level | P_min | P_max | Width |
+|---|---|---|---|
+| 20% | 1.1596 | 1.1611 | 0.13% |
+| 50% | 1.1582 | 1.1625 | 0.37% |
+| 80% | 1.1561 | 1.1646 | 0.73% |
+| 95% | 1.1533 | 1.1675 | 1.22% |
+
+The bands are properly nested (20% ⊂ 50% ⊂ 80% ⊂ 95%) and widen at an
+accelerating rate toward the tails — consistent with the fat-tailed
+Student's t distribution (ν ≈ 7.07 in the dominant low-volatility regime,
+`GARCH_1_1.md`) underlying the model, rather than the more evenly-spaced
+widening a Normal distribution would produce. This is a further, informal
+consistency check in the same spirit as section 3.1's single-interval
+check: the shape of the fan, not just its width, is doing what the
+model's own distributional assumptions predict.
+
+Chart saved to `docs/fan_chart.png`.
+
+## 9. Files produced at this stage
 
 - `src/price_range.py` — `compute_price_range` (log-return interval to
   price conversion), main script producing the rigorous range and the
   labeled illustrative regime comparison
+- `src/fan_chart.py` — multi-band price conversion and fan chart plotting
 - `data/processed/price_range_output.csv` — the operational result
   (date, last price, confidence level, P_min, P_max, range width)
+- `data/processed/ms_garch_fan_chart_inputs.csv` — return quantiles at 7
+  confidence levels
+- `docs/fan_chart.png` — the rendered fan chart
 
-## 7. Status of the project's objective (b)
+## 10. Status of the project's objective (b)
 
 With this stage, objective (b) — stated at the project's outset
 (`methodology.md`, section 1) — is now concretely delivered: a real,

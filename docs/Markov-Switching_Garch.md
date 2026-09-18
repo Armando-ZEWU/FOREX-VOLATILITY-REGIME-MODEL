@@ -17,11 +17,36 @@ implementation is the R package **MSGARCH** (Ardia, Bluteau, Boudt,
 Catania, Trottier, 2019, *Journal of Statistical Software*), built in
 C++/Rcpp.
 
-This is not merely a tooling gap. True MS-GARCH estimation faces a genuine theoretical difficulty, documented since Hamilton & Susmel (1994) and Haas, Mittnik & Paolella (2004a): the conditional variance in a given regime depends, in principle, on the **entire history of regime paths** since the start of the series(because σ²(t) depends on σ²(t−1), which itself depended on whichever regime was active at t−1, and so on) — making the exact likelihood computationally intractable beyond a handful of observations. 
-Practical implementations, including MSGARCH, rely on an approximation (Haas, Mittnik & Paolella (2004a)
-"collapsing" procedure) to make estimation feasible at all. Even the
-reference tool is working with an approximation, not an exact model.
+This is not merely a tooling gap. True MS-GARCH estimation faces a
+genuine theoretical difficulty, documented since Hamilton & Susmel
+(1994): in the fully general model, the conditional variance in a given
+regime depends, in principle, on the entire history of regime paths
+since the start of the series (because σ²(t) depends on σ²(t−1), which
+itself depended on whichever regime was active at t−1, and so on) —
+making the exact likelihood of that fully general model computationally
+intractable beyond a handful of observations, since it requires summing
+over an exponentially growing number of regime paths.
 
+Two different responses to this exist in the literature. Gray (1996)
+keeps the fully general model and makes it *tractable by approximating
+it*: at each step, the K regime-conditional variances are collapsed into
+a single expected variance (weighted by the filtered regime
+probabilities), used as the common lagged-variance input going forward —
+a genuine approximation to the fully general model's likelihood.
+
+MSGARCH does not do this. It implements the specification of Haas,
+Mittnik & Paolella (2004a), which *sidesteps* the path-dependency problem
+instead of approximating around it: each regime k runs its own
+self-contained GARCH(1,1) recursion (σ²_k(t) = ω_k + α_k·r(t−1)² +
+β_k·σ²_k(t−1)), fed by the same observed return but its own lagged
+variance — no cross-regime collapsing at any step. The observed return's
+density is then the K-regime mixture of these K parallel processes,
+weighted by the regime probabilities. This gives an *exact* likelihood
+for this (more restricted) model — it is not an approximation in Gray's
+sense. The real cost is different: each regime's path ignores the
+history of which regime was *actually* realized at each past date, a
+simplification relative to the fully general model, but not the same
+kind of approximation as Gray's collapsing.
 Given this, and that the person running this project has R available,
 this stage was run as a **single, deliberate, documented exception** to
 the project's otherwise all-Python pipeline: an R script (`ms_garch.R`)
@@ -36,7 +61,7 @@ This stage deliberately uses **K=2**, not 3, for a stated reason, not
 arbitrarily: MS-GARCH estimation is substantially harder numerically than
 fitting a Gaussian HMM on an already-computed scalar series (σ(t)) — it
 must jointly estimate ω, α, β **per regime**, plus the transition matrix,
-under the path-dependency approximation described above. Each additional
+under the Haas et al. (2004a) parallel-regime specification described above. Each additional
 regime multiplies this difficulty. The FX/equity MS-GARCH literature
 (e.g. Klaassen, 2002; Marcucci, 2005) commonly starts with 2 regimes
 before considering more. This is a genuine methodological difference from
@@ -252,8 +277,7 @@ Bringing sections 4-6 together into plain economic terms:
 
 ## 8. Known limitations
 
-- MS-GARCH estimation relies on an approximation to the true (intractable)
-  likelihood (section 1) — not exact, even in the reference implementation.
+- MSGARCH's likelihood is exact for the (more restricted) Haas et al. (2004a) specification it implements — it is not an approximation of that model. What remains genuinely intractable is the fully general path-dependent MS-GARCH likelihood (section 1); MSGARCH avoids that intractability by using a different, deliberately more restricted model, not by approximating the general one.
 - ν₂ (regime 2's tail parameter) is imprecisely estimated (section 4.4);
   should not be over-interpreted on its own.
 - AIC and BIC disagree on whether the added complexity is justified

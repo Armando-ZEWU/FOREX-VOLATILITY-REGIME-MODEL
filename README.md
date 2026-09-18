@@ -1,6 +1,6 @@
 ﻿# FX Volatility Regime Model
 
-> A quantitative model exploring the FX market (EUR/USD) to measure a "fear"/volatility proxy that explains returns and detects market regimes (low/mean/high).
+> A quantitative model exploring the FX market (EUR/USD) to measure a "fear"/volatility proxy that explains returns and detects market regimes (low/avarage/high).
 
 **Status: ongoing research project — undergraduate student in International Economics.**
 This is not a production trading tool. It's an applied econometrics research exercise, meant to be honest about its limitations rather than impressive on paper.

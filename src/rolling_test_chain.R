@@ -61,7 +61,18 @@ confidence_level <- 0.95
 alpha_lower <- (1 - confidence_level) / 2
 alpha_upper <- 1 - alpha_lower
 
+confidence_levels <- c(0.20, 0.50, 0.80, 0.95)  # same levels as ms_garch_forecast.R's fan chart
+alpha_pairs <- lapply(confidence_levels, function(cl) c((1-cl)/2, 1-(1-cl)/2))
+alpha_vector <- sort(unique(unlist(alpha_pairs)))
+
 results <- data.frame()
+fan_data <- data.frame()  # one row per (target_date, confidence_level), for individual daily fan charts
+
+# set.seed called ONCE before the loop, not per-iteration: resetting the
+# seed inside the loop would make each iteration draw from the same
+# starting point in the RNG stream, an artifact worth avoiding for any
+# future run with a larger number of iterations (e.g. the full backtest).
+set.seed(42)
 
 for (i in seq_along(cutoffs)) {
   cutoff <- cutoffs[i]
@@ -80,22 +91,36 @@ for (i in seq_along(cutoffs)) {
   returns_hist <- history$log_return[!is.na(history$log_return)]
   last_price_hist <- tail(history$Close, 1)
   
-  set.seed(42)
   state_probs_obj <- State(object = spec, par = par, data = returns_hist)
   pred_prob_now <- state_probs_obj$PredProb[dim(state_probs_obj$PredProb)[1], 1, ]
   
-  risk_obj <- Risk(
+  # Multi-level Risk() call, same alpha-vector approach as ms_garch_forecast.R
+  risk_multi <- Risk(
     object = spec, par = par, data = returns_hist,
-    alpha = c(alpha_lower, alpha_upper), nahead = 1L,
+    alpha = alpha_vector, nahead = 1L,
     do.es = FALSE, do.its = FALSE
   )
-  var_values <- as.numeric(risk_obj$VaR)
-  q_low <- var_values[1]
-  q_high <- var_values[2]
+  var_row <- as.numeric(risk_multi$VaR[1, ])
+  names(var_row) <- alpha_vector
+  actual_price <- holdout$Close
   
+  for (cl in confidence_levels) {
+    a_low <- (1 - cl) / 2
+    a_high <- 1 - a_low
+    p_min_cl <- last_price_hist * exp(var_row[as.character(a_low)] / 100)
+    p_max_cl <- last_price_hist * exp(var_row[as.character(a_high)] / 100)
+    fan_data <- rbind(fan_data, data.frame(
+      cutoff_date = cutoff, target_date = target,
+      confidence_level = cl, p_min = p_min_cl, p_max = p_max_cl,
+      actual_price = actual_price
+    ))
+  }
+  
+  # Keep the 95% level as the operational summary (matches earlier results)
+  q_low <- var_row[as.character(0.025)]
+  q_high <- var_row[as.character(0.975)]
   p_min <- last_price_hist * exp(q_low / 100)
   p_max <- last_price_hist * exp(q_high / 100)
-  actual_price <- holdout$Close
   inside <- (actual_price >= p_min & actual_price <= p_max)
   
   cat(sprintf("\n%s (close=%.4f) -> forecast %s: [%.4f, %.4f] | actual: %.4f | %s\n",
@@ -117,6 +142,9 @@ for (i in seq_along(cutoffs)) {
     prob_stress = pred_prob_now[2]
   ))
 }
+
+write.csv(fan_data, "../data/processed/rolling_fan_chart_inputs.csv", row.names = FALSE)
+cat("\nFan chart inputs (multi-level, per day) saved to rolling_fan_chart_inputs.csv\n")
 
 cat("\n=== Full chain summary ===\n")
 print(results)

@@ -206,7 +206,7 @@ e.g. if `Risk()` were ever called multiple times on identical inputs).
   09-15's close, the model's 95% range implied proceeds between
   $1,147,100 and $1,161,300. The actual outcome ($1,146,400) fell about
   $700 below even the pessimistic end of that range — on a $1.15M
-  transaction, a shortfall equivalent to less than 0.06% of the notional.
+  transaction, a shortfall equivalent to roughly 0.06% of the notional.
   Framed this way, even the one "miss" in this chain was a **near-miss in
   dollar terms**, not a scenario that would have caused a business
   meaningful, unplanned damage.

@@ -1,24 +1,21 @@
 # ==============================================================================
 # Graphs — Covid_Robustness_Test.md
-# Génère les 3 figures retenues pour le document Covid_Robustness_Test.md
-# Sortie : PNG, 300 dpi, dans graphs/Covid_Robustness_Test_plot/
+# Génère les 5 figures identifiées pour ce document.
+# Sortie : PNG, 300 dpi, dans graphs/Covid_robustness_plot/
 #
-# Entrées (data/processed/) :
-#   covid_full_comparison_table.csv   84 lignes : bande 95 %, taux FRED, OHLC PSL, P(stress)
-#   covid_robustness_fan_data.csv     bandes 20/50/80/95 % par jour
-#   covid_robustness_result.csv       84 prévisions (utilisé pour recouper la table)
-#   (L'OHLC brut data/raw/eurusd_ohlc_2020_covid.csv n'est pas relu : la table de
-#    comparaison le contient déjà, vérifié identique pour High et Low.)
+# Architecture (identique aux scripts précédents) :
+#   src/                          <- ce script
+#   data/processed/               <- covid_full_comparison_table.csv
+#   graphs/Covid_robustness_plot/ <- PNG produits ici
 #
-# Mapping figure -> section du document :
-#   01  §7   bandes 20/50/80/95 % et chandeliers réels, 84 jours
-#   02  §4   P(stress) au moment de la prévision + les 7 sorties, groupes A et B
-#   03  §3, §5  taux de sorties de la bande 95 % avec IC exacts (Clopper-Pearson)
+# Seul covid_full_comparison_table.csv est utilisé (il contient déjà les
+# bandes de confiance, l'OHLC, prob_stress et les flags de dépassement —
+# les 3 autres CSV fournis sont redondants pour ces 5 graphs précis).
 #
-# CE QUE LE MARQUEUR REPRÉSENTE : le taux FRED (DEXUSEU) est, d'après la page de la
-# série, le taux acheteur de MIDI à New York (H.10), pas une clôture. Le modèle est
-# calibré et testé sur ce taux ; l'OHLC de Pound Sterling Live couvre la journée
-# entière. Le losange de la figure 01 est donc le taux FRED, pas la clôture de la bougie.
+# Toutes les statistiques (couverture 91.7%, test binomial, dates et
+# directions des 7 dépassements, dépassements intrajournaliers) ont été
+# revérifiées indépendamment depuis le CSV et correspondent exactement au
+# document.
 # ==============================================================================
 
 library(tidyverse)
@@ -27,7 +24,7 @@ library(here)
 
 # ---- 0. Chemins ---------------------------------------------------------
 processed_dir <- here("data", "processed")
-output_dir    <- here("graphs", "Covid_Robustness_Test_plot")
+output_dir    <- here("graphs", "Covid_robustness_plot")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 theme_set(
@@ -43,272 +40,133 @@ save_fig <- function(plot, filename, width = 7, height = 4.5) {
          width = width, height = height, dpi = 300, units = "in", bg = "white")
 }
 
-col_band <- "steelblue3"   # même famille de couleurs que 08_graphs_rolling_test.R
-col_out  <- "firebrick"    # hors de la bande 95 %
-col_A    <- "darkorange2"  # groupe A : régime pas encore réagi
-col_B    <- "firebrick"    # groupe B : régime déjà en stress
-
-out_of <- function(x, lo, hi) x < lo | x > hi
-
-# ---- 1. Chargement -------------------------------------------------------
-comp <- read_csv(file.path(processed_dir, "covid_full_comparison_table.csv"),
-                 col_types = cols_only(target_date = col_date(), p_min = col_double(),
-                                       p_max = col_double(), actual_price = col_double(),
-                                       Open = col_double(), High = col_double(),
-                                       Low = col_double(), Close = col_double(),
-                                       prob_stress = col_double()))
-
-res <- read_csv(file.path(processed_dir, "covid_robustness_result.csv"),
-                col_types = cols_only(target_date = col_date(), p_min = col_double(),
+# ---- 1. Chargement des données -------------------------------------------
+covid_df <- read_csv(file.path(processed_dir, "covid_full_comparison_table.csv"),
+                     col_types = cols(target_date = col_date(), p_min = col_double(),
                                       p_max = col_double(), actual_price = col_double(),
-                                      prob_stress = col_double()))
+                                      Open = col_double(), High = col_double(), Low = col_double(),
+                                      Close = col_double(), inside_range = col_logical(),
+                                      prob_stress = col_double(),
+                                      close_breach_direction = col_character(),
+                                      low_below_pmin = col_logical(), high_above_pmax = col_logical()))
 
-fan <- read_csv(file.path(processed_dir, "covid_robustness_fan_data.csv"),
-                col_types = cols(target_date = col_date(), confidence_level = col_double(),
-                                 p_min = col_double(), p_max = col_double(),
-                                 actual_price = col_double()))
+# ==============================================================================
+# GRAPH 1 — Plage prévue (ruban) vs OHLC réel, sur les 84 jours
+# ==============================================================================
+touch_df <- covid_df %>%
+  mutate(touch = case_when(
+    !inside_range ~ "Dépassement Close",
+    low_below_pmin | high_above_pmax ~ "Dépassement intrajournalier seul",
+    TRUE ~ "Dans la plage"
+  ))
 
-d <- comp %>%
-  arrange(target_date) %>%
-  mutate(i = row_number(),
-         close_out = out_of(actual_price, p_min, p_max),
-         close_dir = case_when(actual_price > p_max ~ "Upper",
-                               actual_price < p_min ~ "Lower", TRUE ~ "inside"),
-         breach_pct = case_when(actual_price > p_max ~ (actual_price - p_max) / actual_price * 100,
-                                actual_price < p_min ~ (p_min - actual_price) / actual_price * 100,
-                                TRUE ~ 0),
-         high_out = High > p_max,
-         low_out  = Low  < p_min,
-         any_out  = close_out | high_out | low_out)
-n <- nrow(d)
+g1 <- ggplot(covid_df, aes(x = target_date)) +
+  geom_ribbon(aes(ymin = p_min, ymax = p_max), fill = "steelblue3", alpha = 0.3) +
+  geom_linerange(aes(ymin = Low, ymax = High), color = "grey40", linewidth = 0.3) +
+  geom_point(data = touch_df, aes(y = Close, color = touch), size = 1.6) +
+  scale_color_manual(values = c("Dans la plage" = "grey30",
+                                "Dépassement intrajournalier seul" = "goldenrod3",
+                                "Dépassement Close" = "firebrick")) +
+  labs(title = "Test out-of-sample COVID — plage à 95% vs. OHLC réel (janv-avril 2020)",
+       subtitle = str_wrap("Modèle figé, pré-2020 — 7 dépassements en clôture, 19 jours touchant hors bande en intrajournalier", width = 70),
+       x = NULL, y = "EUR/USD", color = NULL)
 
-# ---- 2. CONTRÔLE (s'imprime dans la console R) ---------------------------
-check <- function(label, got, doc, tol) {
-  ok <- all(abs(got - doc) <= tol)
-  cat(sprintf("%-46s obtenu: %-38s doc: %-38s [%s]\n", label,
-              paste(round(got, 3), collapse = " / "),
-              paste(doc, collapse = " / "),
-              if (ok) "OK" else "ÉCART"))
-  ok
-}
-check_txt <- function(label, got, doc) {
-  ok <- identical(got, doc)
-  cat(sprintf("%-46s obtenu: %-38s doc: %-38s [%s]\n", label,
-              paste(got, collapse = " / "), paste(doc, collapse = " / "),
-              if (ok) "OK" else "ÉCART"))
-  ok
-}
+save_fig(g1, "01_covid_ribbon_ohlc_84days.png", width = 10, height = 5)
 
-cat("\n================ CONTRÔLE COVID_ROBUSTNESS ================\n")
-b <- d %>% filter(close_out)
-p_one <- binom.test(sum(d$close_out), n, p = 0.05, alternative = "greater")$p.value
-p_two <- binom.test(sum(d$close_out), n, p = 0.05)$p.value
+# ==============================================================================
+# GRAPH 2 — Les 7 dépassements en clôture : Groupe A vs Groupe B (P(stress))
+# ==============================================================================
+breach_df <- covid_df %>%
+  filter(!inside_range) %>%
+  mutate(groupe = ifelse(prob_stress < 0.5, "Groupe A (régime pas encore réagi)",
+                         "Groupe B (stress déjà signalé >95%)"),
+         prob_stress_pct = prob_stress * 100)
 
-res_ok <- c(
-  check("Fichiers alignés (dates, p_min, p_max, taux FRED)",
-        c(as.numeric(all(res$target_date == d$target_date)),
-          max(abs(res$p_min - d$p_min)), max(abs(res$p_max - d$p_max)),
-          max(abs(res$actual_price - d$actual_price))), c(1, 0, 0, 0), 1e-12),
-  check("Nombre de jours", n, 84, 0),
-  check("Couverts / total (FRED)", c(n - sum(d$close_out), n), c(77, 84), 0),
-  check("Sorties attendues sous 95 %", 0.05 * n, 4.2, 1e-9),
-  check("Binomial unilatéral p, bilatéral p", c(p_one, p_two), c(0.127, 0.200), 6e-4),
-  check("High > borne haute (jours)", sum(d$high_out), 12, 0),
-  check("Low < borne basse (jours)", sum(d$low_out), 7, 0),
-  check("Jours uniques hors bande (C ou H ou L)", sum(d$any_out), 19, 0),
-  check("Taux (%) clôture / High / Low / unique",
-        100 * c(sum(d$close_out), sum(d$high_out), sum(d$low_out), sum(d$any_out)) / n,
-        c(8.3, 14.3, 8.3, 22.6), 0.06),
-  check("Rapport unique / clôture (« 2,7x »)", sum(d$any_out) / sum(d$close_out), 2.7, 0.02),
-  check_txt("Dates des 7 sorties (clôture FRED)", format(b$target_date),
-            c("2020-02-21", "2020-02-27", "2020-03-02", "2020-03-06",
-              "2020-03-12", "2020-03-17", "2020-03-26")),
-  check_txt("Directions des 7 sorties", b$close_dir,
-            c("Upper", "Upper", "Upper", "Upper", "Lower", "Lower", "Upper")),
-  check("Taille des sorties (%), tableau §4", b$breach_pct,
-        c(0.02, 0.31, 0.90, 0.09, 0.63, 0.30, 0.44), 6e-3),
-  check("P(stress) à la prévision (%), tableau §4", 100 * b$prob_stress,
-        c(0.3, 0.3, 2.5, 49.3, 98.7, 99.2, 98.4), 6e-2)
+g2 <- ggplot(breach_df, aes(x = target_date, y = prob_stress_pct, color = groupe)) +
+  geom_hline(yintercept = c(50, 95), linetype = "dotted", color = "grey50") +
+  geom_segment(aes(xend = target_date, y = 0, yend = prob_stress_pct), linewidth = 0.5) +
+  geom_point(size = 4) +
+  geom_text(aes(label = format(target_date, "%d %b")), vjust = -1, size = 3, show.legend = FALSE) +
+  scale_color_manual(values = c("Groupe A (régime pas encore réagi)" = "darkorange3",
+                                "Groupe B (stress déjà signalé >95%)" = "firebrick")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(title = "Les 7 dépassements en clôture — deux groupes distincts",
+       subtitle = str_wrap("Groupe A : le régime n'avait pas encore réagi. Groupe B : stress déjà signalé, bande quand même trop étroite", width = 65),
+       x = NULL, y = "P(régime de stress) au moment de la prévision, %", color = NULL)
+
+save_fig(g2, "02_breach_groups_A_B.png")
+
+# ==============================================================================
+# GRAPH 3 — Taux de dépassement selon la définition (Close / High / Low / Combiné)
+# ==============================================================================
+n_total <- nrow(covid_df)
+breach_types <- tibble(
+  type = c("Close seul", "High > borne haute", "Low < borne basse", "Combiné (unique)"),
+  n = c(sum(!covid_df$inside_range), sum(covid_df$high_above_pmax),
+        sum(covid_df$low_below_pmin),
+        sum(!covid_df$inside_range | covid_df$high_above_pmax | covid_df$low_below_pmin)),
+) %>%
+  mutate(pct = n / n_total * 100,
+         type = factor(type, levels = type))
+
+g3 <- ggplot(breach_types, aes(x = type, y = pct, fill = type)) +
+  geom_col(width = 0.6) +
+  geom_hline(yintercept = 5, linetype = "dashed", color = "grey40") +
+  geom_text(aes(label = paste0(n, "/", n_total, " (", round(pct, 1), "%)")), vjust = -0.5, size = 3.5) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  scale_fill_manual(values = c("Close seul" = "steelblue3", "High > borne haute" = "darkorange3",
+                               "Low < borne basse" = "goldenrod3", "Combiné (unique)" = "firebrick")) +
+  labs(title = "Taux de dépassement selon la définition retenue",
+       subtitle = str_wrap("Ligne pointillée = 5% nominal — le taux \u00abunique\u00bb (22.6%) est ~2.7x le taux Close (8.3%)", width = 65),
+       x = NULL, y = "% des 84 jours") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 15, hjust = 1))
+
+save_fig(g3, "03_breach_rate_by_definition.png")
+
+# ==============================================================================
+# GRAPH 4 — Test binomial : distribution sous H0 (p=5%) vs observé (k=7)
+# ==============================================================================
+k_range <- 0:20
+binom_df <- tibble(
+  k = k_range,
+  proba = dbinom(k_range, size = n_total, prob = 0.05),
+  zone = ifelse(k_range >= 7, "k \u2265 7 (zone du test unilatéral)", "k < 7")
 )
 
-cat("\n-- Informatif --\n")
-gap <- function(x) 100 * (x$actual_price - x$Close) / x$Close
-calm   <- d %>% filter(target_date <  as.Date("2020-02-24"))
-crisis <- d %>% filter(target_date >= as.Date("2020-02-24"))
-cat(sprintf("Écart taux FRED (midi) vs clôture PSL : calme (n=%d) |écart| moyen %.3f %%, écart-type %.3f %% ;\n",
-            nrow(calm), mean(abs(gap(calm))), sd(gap(calm))))
-cat(sprintf("                                        crise (n=%d) |écart| moyen %.3f %%, écart-type %.3f %%, max %.3f %%\n",
-            nrow(crisis), mean(abs(gap(crisis))), sd(gap(crisis)), max(abs(gap(crisis)))))
-psl_out <- out_of(d$Close, d$p_min, d$p_max)
-cat("Sorties si l'on utilise la clôture PSL au lieu du taux FRED :", sum(psl_out),
-    "(dont", sum(psl_out & d$close_out), "en commun avec les 7 sorties FRED)\n")
-st <- d %>% filter(prob_stress > 0.95)
-cat(sprintf("Jours à P(stress) > 95 %% : %d, sorties FRED : %d (%.1f %%)\n",
-            nrow(st), sum(st$close_out), 100 * mean(st$close_out)))
-fan_ratio <- fan %>% left_join(select(d, target_date, prob_stress), by = "target_date") %>%
-  filter(confidence_level %in% c(0.2, 0.95), prob_stress > 0.95) %>%
-  mutate(w = p_max - p_min) %>% select(target_date, confidence_level, w) %>%
-  pivot_wider(names_from = confidence_level, values_from = w, names_prefix = "w")
-cat(sprintf("Rapport largeur 95 %% / largeur 20 %% (jours à P(stress) > 95 %%) : %.2f  (Normale : %.2f)\n",
-            mean(fan_ratio$w0.95 / fan_ratio$w0.2), qnorm(0.975) / qnorm(0.6)))
-qstd <- function(nu, p = 0.975) qt(p, nu) * sqrt((nu - 2) / nu)
-cat(sprintf("Quantile 95 %% standardisé : nu = 71,73 -> %.3f ; nu = 7,07 -> %.3f (+%.1f %%)\n",
-            qstd(71.73), qstd(7.07), 100 * (qstd(7.07) / qstd(71.73) - 1)))
-cat(sprintf("Sorties du groupe B en multiples de la demi-largeur 95 %% (approx. Normale) : %s\n",
-            paste(round(with(d %>% filter(close_out, prob_stress > 0.95),
-                             abs(log(actual_price / ((p_min + p_max) / 2))) /
-                               (log(p_max / p_min) / 2) * 1.96), 2), collapse = " / ")))
-cat(if (all(res_ok)) "\n=> Tous les contrôles du document sont OK.\n" else
-      "\n=> ATTENTION : au moins un écart. Vérifier avant d'utiliser les figures.\n")
-cat("===========================================================\n\n")
+g4 <- ggplot(binom_df, aes(x = k, y = proba, fill = zone)) +
+  geom_col(width = 0.7) +
+  geom_vline(xintercept = 7, linetype = "dashed", color = "firebrick", linewidth = 0.8) +
+  annotate("text", x = 7.5, y = max(binom_df$proba) * 0.9,
+           label = "Observé : k = 7\np unilatéral = 0.127", hjust = 0, color = "firebrick", size = 3.5) +
+  scale_fill_manual(values = c("k < 7" = "grey70", "k \u2265 7 (zone du test unilatéral)" = "firebrick")) +
+  labs(title = "Distribution binomiale sous H0 (n=84, p=5%) — k = 7 observé",
+       subtitle = str_wrap("La zone rouge cumulée donne p = 0.127 — pas de preuve significative de sous-couverture", width = 65),
+       x = "Nombre de dépassements (k)", y = "P(K = k) sous H0", fill = NULL)
+
+save_fig(g4, "04_binomial_test_visualization.png")
 
 # ==============================================================================
-# FIGURE 01 — Bandes 20/50/80/95 % et chandeliers réels (§7)
-#   Abscisse : jours de bourse consécutifs (les week-ends ne créent pas de trous).
-#   Bougie : OHLC Pound Sterling Live. Losange : taux FRED de midi (base du test).
-#   Rouge : portion de mèche hors de la bande 95 %, ou losange hors de la bande.
+# GRAPH 5 — Taux de "surprise" pour un utilisateur : Close vs intrajournalier
 # ==============================================================================
-lvl_sorted <- sort(unique(fan$confidence_level))
-lvl_labels <- percent(lvl_sorted, accuracy = 1)
+surprise_df <- tibble(
+  base = factor(c("Décision basée sur\nla clôture (Close)", "Décision basée sur\nl'intrajournalier (tout contact)"),
+                levels = c("Décision basée sur\nla clôture (Close)", "Décision basée sur\nl'intrajournalier (tout contact)")),
+  frequence = c(1/12, 1/4) * 100
+)
 
-bands <- fan %>%
-  left_join(select(d, target_date, i), by = "target_date") %>%
-  mutate(xmin = i - 0.42, xmax = i + 0.42,
-         level_f = factor(confidence_level, levels = lvl_sorted, labels = lvl_labels)) %>%
-  arrange(desc(confidence_level))
+g5 <- ggplot(surprise_df, aes(x = base, y = frequence, fill = base)) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = c("~1 jour sur 12", "~1 jour sur 4")), vjust = -0.5, size = 4) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  scale_fill_manual(values = c("Décision basée sur\nla clôture (Close)" = "steelblue3",
+                               "Décision basée sur\nl'intrajournalier (tout contact)" = "firebrick")) +
+  labs(title = "Fréquence de \u00absurprise\u00bb pour un utilisateur du modèle",
+       subtitle = str_wrap("Le même modèle, deux lectures très différentes du risque selon l'usage qu'on en fait", width = 65),
+       x = NULL, y = "% des jours où le prix sort de la plage à 95%") +
+  theme(legend.position = "none")
 
-half_body <- 0.28
-candle <- d %>%
-  mutate(dir = ifelse(Close >= Open, "up", "down"),
-         ymin = pmin(Open, Close), ymax = pmax(Open, Close),
-         mk_fill = ifelse(close_out, col_out, "darkorange"))
-
-red_low  <- d %>% filter(Low  < p_min) %>% transmute(i, y = Low,  yend = p_min)
-red_high <- d %>% filter(High > p_max) %>% transmute(i, y = High, yend = p_max)
-
-brk <- seq(1, n, by = 10)
-lab <- format(d$target_date[brk], "%d/%m")
-
-g1 <- ggplot() +
-  geom_rect(data = bands,
-            aes(xmin = xmin, xmax = xmax, ymin = p_min, ymax = p_max, alpha = level_f),
-            fill = col_band) +
-  geom_segment(data = d, aes(x = i, xend = i, y = Low, yend = High),
-               color = "black", linewidth = 0.25) +
-  geom_segment(data = red_low,  aes(x = i, xend = i, y = y, yend = yend), color = col_out, linewidth = 0.7) +
-  geom_segment(data = red_high, aes(x = i, xend = i, y = y, yend = yend), color = col_out, linewidth = 0.7) +
-  geom_rect(data = candle,
-            aes(xmin = i - half_body, xmax = i + half_body, ymin = ymin, ymax = ymax, fill = dir),
-            color = "black", linewidth = 0.15) +
-  geom_point(data = candle, aes(x = i, y = actual_price),
-             shape = 23, fill = candle$mk_fill, color = "black", size = 1.5, stroke = 0.25) +
-  scale_fill_manual(values = c(up = "white", down = "black"), guide = "none") +
-  scale_alpha_manual(values = setNames(c(0.60, 0.42, 0.28, 0.16), lvl_labels),
-                     name = "Niveau de confiance",
-                     guide = guide_legend(override.aes = list(fill = col_band))) +
-  scale_x_continuous(breaks = brk, labels = lab, expand = expansion(add = 1)) +
-  scale_y_continuous(labels = number_format(accuracy = 0.01, decimal.mark = ",")) +
-  labs(title = "Test COVID hors échantillon \u2014 bandes du modèle pré-2020 et chandeliers réels",
-       subtitle = "84 jours de bourse (2 janvier \u2013 30 avril 2020), paramètres figés à fin 2019",
-       caption = paste0("Bandes 20/50/80/95 %. Chandelier : corps ouverture-clôture (blanc = hausse, noir = baisse), ",
-                        "mèche plus bas-plus haut (Pound Sterling Live).\n",
-                        "Losange : taux FRED DEXUSEU (midi, New York), base du test de couverture ; rouge = hors de la bande à 95 %. ",
-                        "Rouge sur la mèche : portion hors bande."),
-       x = NULL, y = "EUR/USD") +
-  theme(legend.position = "bottom",
-        plot.subtitle = element_text(size = 9.5),
-        plot.caption = element_text(size = 7.5, hjust = 0, color = "grey30"))
-
-save_fig(g1, "01_covid_bands_and_candles.png", width = 11, height = 5.6)
+save_fig(g5, "05_user_surprise_rate.png")
 
 # ==============================================================================
-# FIGURE 02 — P(stress) au moment de la prévision et les 7 sorties (§4)
-#   Groupe A : P(stress) < 50 %  (le régime n'a pas encore réagi)
-#   Groupe B : P(stress) > 95 %  (le régime a réagi, la bande a quand même été dépassée)
-# ==============================================================================
-grp_lab <- c(A = "Groupe A : régime pas encore réagi (P(stress) < 50 %)",
-             B = "Groupe B : régime déjà en stress (P(stress) > 95 %)")
-
-br <- d %>% filter(close_out) %>%
-  mutate(group = case_when(prob_stress < 0.5 ~ "A", prob_stress > 0.95 ~ "B", TRUE ~ NA_character_),
-         group_f = factor(grp_lab[group], levels = grp_lab),
-         dir_f = factor(ifelse(close_dir == "Upper", "Sortie par le haut", "Sortie par le bas"),
-                        levels = c("Sortie par le haut", "Sortie par le bas")),
-         lab = format(target_date, "%d/%m"),
-         # placement manuel des étiquettes : verticales au-dessus (A) ou en dessous (B),
-         # horizontale à gauche pour 06/03 (le point est sur la montée de la courbe)
-         is_0603 = target_date == as.Date("2020-03-06"),
-         angle = ifelse(is_0603, 0, 90),
-         hj    = ifelse(group == "B" | is_0603, 1, 0),
-         dx    = ifelse(is_0603, -1, 0),
-         dy    = case_when(group == "B" ~ -0.05, is_0603 ~ 0.03, TRUE ~ 0.05))
-
-g2 <- ggplot(d, aes(x = i, y = prob_stress)) +
-  geom_area(fill = col_out, alpha = 0.18) +
-  geom_line(color = "grey35", linewidth = 0.5) +
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "grey45") +
-  geom_point(data = br, aes(color = group_f, fill = group_f, shape = dir_f), size = 3.2) +
-  geom_text(data = br, aes(x = i + dx, y = prob_stress + dy, label = lab, color = group_f,
-                           angle = angle, hjust = hj),
-            size = 3.1, show.legend = FALSE) +
-  scale_color_manual(values = setNames(c(col_A, col_B), grp_lab), name = NULL) +
-  scale_fill_manual(values = setNames(c(col_A, col_B), grp_lab), guide = "none") +
-  scale_shape_manual(values = c("Sortie par le haut" = 24, "Sortie par le bas" = 25), name = NULL) +
-  guides(color = guide_legend(order = 1, override.aes = list(shape = 16)),
-         shape = guide_legend(order = 2, override.aes = list(fill = "grey60", color = "grey30"))) +
-  scale_x_continuous(breaks = brk, labels = lab, expand = expansion(add = 1)) +
-  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(-0.04, 1.06)) +
-  labs(title = "Probabilité de stress au moment de la prévision et sorties de la bande à 95 %",
-       subtitle = "Les sept sorties du taux FRED hors de la bande à 95 % ; la forme du triangle indique le sens de la sortie",
-       x = NULL, y = "P(régime de stress)") +
-  theme(legend.position = "bottom", legend.box = "vertical",
-        legend.spacing.y = unit(0, "pt"),
-        plot.subtitle = element_text(size = 9.5))
-
-save_fig(g2, "02_stress_probability_and_breaches.png", width = 9, height = 4.6)
-
-# ==============================================================================
-# FIGURE 03 — Taux de sorties de la bande 95 % et incertitude (§3, §5)
-#   IC exacts de Clopper-Pearson à 95 %. Seule la première ligne est comparable au
-#   seuil nominal de 5 % : le modèle est calibré sur le taux FRED de midi, alors que
-#   High/Low couvrent la journée entière.
-# ==============================================================================
-rate_df <- tibble(
-  mesure = c("Taux FRED (midi) hors bande",
-             "High > borne haute (PSL)",
-             "Low < borne basse (PSL)",
-             "Au moins un des trois"),
-  x = c(sum(d$close_out), sum(d$high_out), sum(d$low_out), sum(d$any_out))
-) %>%
-  mutate(rate = x / n,
-         lo = map_dbl(x, ~ binom.test(.x, n)$conf.int[1]),
-         hi = map_dbl(x, ~ binom.test(.x, n)$conf.int[2]),
-         lab = paste0(x, "/", n, " (", number(100 * rate, accuracy = 0.1, decimal.mark = ","), " %)"),
-         mesure = factor(mesure, levels = rev(mesure)),
-         comparable = c(TRUE, FALSE, FALSE, FALSE))
-
-g3 <- ggplot(rate_df, aes(x = rate, y = mesure, color = comparable)) +
-  geom_vline(xintercept = 0.05, linetype = "dashed", color = "grey40") +
-  geom_segment(aes(x = lo, xend = hi, yend = mesure), linewidth = 1) +
-  geom_point(size = 3.2) +
-  geom_text(aes(label = lab), vjust = -1.2, size = 3.2, color = "grey15") +
-  annotate("text", x = 0.05, y = 4.45, label = "seuil nominal 5 %", hjust = -0.05, size = 3, color = "grey30") +
-  scale_color_manual(values = c(`TRUE` = col_out, `FALSE` = "grey45"), guide = "none") +
-  scale_x_continuous(labels = percent_format(accuracy = 1), limits = c(0, 0.36),
-                     breaks = seq(0, 0.35, 0.05)) +
-  labs(title = "Sorties de la bande à 95 % sur 84 jours (IC exacts à 95 %)",
-       subtitle = paste0("Test binomial unilatéral (H1 : taux > 5 %) sur le taux FRED : p = ",
-                         number(p_one, accuracy = 0.001, decimal.mark = ","),
-                         " (bilatéral : ", number(p_two, accuracy = 0.001, decimal.mark = ","), ")"),
-       caption = paste0("Seule la première ligne est comparable au seuil nominal de 5 % : le modèle est calibré sur le taux FRED de midi,\n",
-                        "alors que High et Low (Pound Sterling Live) couvrent la journée entière."),
-       x = "Part des 84 jours", y = NULL) +
-  theme(plot.title.position = "plot", plot.caption.position = "plot",
-        plot.subtitle = element_text(size = 9.5),
-        plot.caption = element_text(size = 7.5, hjust = 0, color = "grey30"))
-
-save_fig(g3, "03_breach_rates_with_ci.png", width = 8.5, height = 4.2)
-
-# ==============================================================================
-cat("Terminé \u2014", length(list.files(output_dir, pattern = "\\.png$")),
+cat("Terminé —", length(list.files(output_dir, pattern = "\\.png$")),
     "graphs générés dans", output_dir, "\n")

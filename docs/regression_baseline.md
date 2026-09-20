@@ -110,15 +110,20 @@ question: even *if* these coefficients reflected a real relationship,
 would the effect be large enough to matter to anyone actually trading or
 managing risk on EUR/USD? The answer is no, on both counts.
 
-- **delta_y_t (coef = -0.1546)**: a day-to-day log-change in GARCH
-  volatility of a typical, unremarkable size (on the order of ±0.05 to
-  ±0.20, well within the range seen in `data/processed/eurusd_garch_shocks.csv`
-  on an ordinary day) would shift the *point estimate* of tomorrow's
-  predicted return by roughly -0.008% to -0.031% — smaller than typical
-  EUR/USD bid-ask spreads and transaction costs on any real trading venue.
-  Even taking the coefficient at face value (ignoring that it is not
-  statistically distinguishable from zero, p = 0.519), the implied economic
-  effect is too small to act on.
+- **delta_y_t (coef = -0.1546)**: even at rarely-observed levels of the
+  volatility shock — ±0.05 (roughly the 95th percentile of
+  `delta_y_t` in `data/processed/eurusd_garch_shocks.csv`) up to ±0.20
+  (close to the 99.5th-99.9th percentile, near the extreme tail of the
+  observed distribution, not a typical day) — the implied shift in
+  tomorrow's predicted return is roughly -0.008% to -0.031%, still
+  smaller than typical EUR/USD bid-ask spreads and transaction costs on
+  any real trading venue. **This strengthens the conclusion rather than
+  weakening it**: even a rarely-seen, large volatility shock — not merely
+  an everyday one — fails to produce an economically meaningful move.
+  Taking the coefficient at face value (ignoring that it is not
+  statistically distinguishable from zero, p = 0.519), the implied
+  economic effect is too small to act on even in the tail of the shock's
+  own distribution.
 - **r_t (coef = 0.0206)**: similarly, a typical prior-day return of ±0.5%
   (the sample's approximate standard deviation, `GARCH_1_1.md` section 3)
   would shift tomorrow's predicted return by about ±0.01% — again,

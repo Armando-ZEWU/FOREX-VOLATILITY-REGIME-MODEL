@@ -149,16 +149,33 @@ context-dependent estimate of expected move **size**.
 Using the fitted Spec B coefficients (const = 0.0171, sigma_t coefficient
 = 0.7029):
 
-- **Calm day** (sigma_t ≈ 0.25, a relatively low conditional volatility):
+- **σ(t) ≈ 0.25** (this corresponds to roughly the **0.1st percentile** of
+  the observed σ(t) distribution — essentially the practical floor of the
+  sample, not merely "relatively low"):
   predicted |r(t+1)| ≈ 0.0171 + 0.7029 × 0.25 ≈ **0.19%**
-- **Turbulent day** (sigma_t ≈ 0.60, e.g. shortly after a shock):
+- **σ(t) ≈ 0.60** (this corresponds to roughly the **71.6th percentile**
+  — barely above the median, not a turbulent or post-shock extreme as the
+  original framing implied):
   predicted |r(t+1)| ≈ 0.0171 + 0.7029 × 0.60 ≈ **0.44%**
 
-In plain terms: on a turbulent day, the model expects a move roughly
-**twice as large** as on a calm day — with zero information on which
-direction that move will take. This is directly usable for the project's
-objective (b) — a volatility-adjusted price range / risk-sizing signal —
-even though it says nothing about direction.
+**Correction to the original framing**: these two values are not
+symmetric, representative "calm vs. turbulent" points — one sits at the
+extreme floor of the distribution, the other barely above its center.
+Labeling 0.60 as "turbulent" or "shortly after a shock" overstated how
+unusual that level actually is. The qualitative point survives (a higher
+σ(t) does imply a wider expected move), but the "roughly twice as large"
+comparison above should be read as floor-vs-median, not calm-vs-crisis. A
+properly matched pair — e.g. the 10th and 90th percentiles of σ(t) — would
+better illustrate a genuine calm-vs-turbulent contrast; producing that
+pair requires re-reading the percentiles directly from
+`data/processed/eurusd_garch_shocks.csv`, not done here.
+
+In plain terms: even comparing the practical floor of volatility to a
+fairly ordinary, near-median level, the model's expected move size roughly
+doubles — with zero information on which direction that move will take.
+This is directly usable for the project's objective (b) — a
+volatility-adjusted price range / risk-sizing signal — even though it says
+nothing about direction.
 
 Is R² = 0.09 "a lot"? Only relative to how difficult FX prediction
 generally is — the direction regressions returned R² ≈ 0.000-0.001, so 0.09

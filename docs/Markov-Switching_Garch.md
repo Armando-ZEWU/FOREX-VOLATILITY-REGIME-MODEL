@@ -1,12 +1,14 @@
-﻿# Markov-Switching GARCH (K=2)
+# Markov-Switching GARCH (K=2)
 
 *Companion document to `methodology.md`, `docs/GARCH_1_1.md`,
 `docs/garch_stability.md`, and `docs/regime_hmm.md`. This document covers
 the project's final planned model: a Markov-Switching GARCH that
-re-estimates ω, α, β separately per regime, addressing the temporal
-instability of the single-regime GARCH documented in `garch_stability.md`
-more directly than the HMM-on-top-of-a-fixed-GARCH approach in
-`regime_hmm.md`.*
+re-estimates ω, α, β separately per regime. It is motivated by the
+sub-period variation in persistence reported in `garch_stability.md`
+(variation in point estimates; the formal likelihood-ratio test in that
+document does not establish an instability, p = 0.277) and addresses that
+variation more directly than the
+HMM-on-top-of-a-fixed-GARCH approach in `regime_hmm.md`.*
 
 ## 1. Why R, not Python — a documented, deliberate exception
 
@@ -74,7 +76,10 @@ constraints.
 
 2 regimes, each a GARCH(1,1) ("sGARCH") with Student's t innovations
 ("std") — matching the single-regime specification already validated in
-`GARCH_1_1.md`.
+`GARCH_1_1.md`, with one difference: no mean equation is estimated here
+(returns are treated as zero-mean), whereas the single-regime `arch` fit
+estimates a constant mean μ. The parameter counts in section 5 reflect
+this.
 
 ### 3.2 First error: conflicting specification arguments
 
@@ -127,39 +132,73 @@ LL: -2806.64   AIC: 5633.27   BIC: 5696.64
 Stable probabilities: Regime 1 = 71.7%, Regime 2 = 28.3%
 ```
 
+The model has 10 free parameters (four per regime, plus the two free
+transition probabilities). The two remaining entries of the transition
+matrix follow from the rows summing to 1; the full matrix (as saved in
+`ms_garch_transition_matrix.csv`) is:
+
+| From \ To | Regime 1 | Regime 2 |
+|---|---|---|
+| Regime 1 | 0.99753 | 0.00247 |
+| Regime 2 | 0.00627 | **0.99373** |
+
 ### 4.2 Which regime is "high volatility"?
 
 Long-run (unconditional) variance per regime, ω/(1−α−β):
 
-| Regime | α+β | Half-life (within-regime GARCH persistence) | Long-run σ |
+| Regime | α+β | Half-life (within-regime GARCH persistence) | Long-run σ implied by the parameters |
 |---|---|---|---|
 | 1 | 0.9971 | 237.1 days | 0.206 |
 | 2 | 0.9892 | 63.9 days | 0.730 |
 
-**Regime 2 is the high-volatility regime** (long-run σ more than 3.5x
-regime 1's), occurring 28.3% of the time — broadly consistent in order of
-magnitude with the HMM's "high volatility" state frequency (32.9%) in
-`regime_hmm.md`, a rough but reassuring cross-check between the two
-independent methods.
+**Regime 2 is the high-volatility regime**, occurring 28.3% of the time:
+on the days where its smoothed probability exceeds 50% (1,080 days), the
+realized daily standard deviation of returns is 0.70, against 0.44 on the
+remaining 3,095 days — a ratio of 1.6 (the classification is itself based
+on volatility, so this is an indicative ratio, not an independent test).
+The long-run σ implied by the parameters (0.73 vs. 0.21, a ratio of 3.5)
+is a much larger and much less precise figure: ω is not significant in
+either regime (p = 0.278 and 0.075) and α+β is close to 1, so the
+denominator 1−α−β is small (0.0029 and 0.0108) and poorly determined. It
+should not be read as a measure of realized volatility.
 
-### 4.3 A counter-intuitive but economically sensible finding
+The HMM in `regime_hmm.md` has
+three states, so its "high volatility" state (32.9% of the time) and this
+model's regime 2 do not partition the sample in the same way: the
+closeness of 32.9% and 28.3% should be read as an order-of-magnitude
+consistency, not as independent confirmation.
 
-The high-volatility regime has **lower** GARCH persistence (α+β = 0.989,
-63.9-day half-life) than the low-volatility regime (α+β = 0.997, 237.1-day
-half-life). In plain terms: **acute stress fades faster than calm
-periods last**. This makes economic sense — a crisis shock (e.g. a central
-bank surprise, a liquidity panic) is intense but tends to resolve within a
-few months, whereas a calm regime, once established, can persist for the
-better part of a year before the next disruption.
+### 4.3 A counter-intuitive finding — suggestive, not established
+
+In the point estimates, the high-volatility regime has **lower** GARCH
+persistence (α+β = 0.989, 63.9-day half-life) than the low-volatility
+regime (α+β = 0.997, 237.1-day half-life). In plain terms, the point
+estimates say that **acute stress fades faster than calm periods last**.
+
+This should be read as suggestive, not as an established result. The
+difference in α+β is 0.0079. Using the standard errors of section 4.1 and
+ignoring the covariance between α and β within each regime (which is not
+saved with the estimates), the standard error of that difference is about
+0.018, i.e. t ≈ 0.45. The covariances would refine this figure, but
+nothing here supports a statistically significant difference. In
+addition, a half-life ln(0.5)/ln(α+β) is extremely sensitive when α+β is
+this close to 1 (see the Period 2 diagnosis in `garch_stability.md`,
+section 4).
+
+If the difference is real, it makes economic sense — a crisis shock
+(e.g. a central bank surprise, a liquidity panic) is intense but tends to
+resolve within a few months, whereas a calm regime, once established, can
+persist for the better part of a year before the next disruption.
 
 **Important distinction, easy to conflate**: this within-regime half-life
 (how fast GARCH shocks decay *inside* a regime) is a different concept
 from the Markov chain's own regime duration (how long the market *stays*
-in a given regime before switching). Using 1/(1−P), the Markov-implied
-expected regime durations are:
+in a given regime before switching). Using 1/(1−P) with the transition
+matrix of section 4.1, the Markov-implied expected regime durations
+(in trading days, as the data are daily trading observations) are:
 
-- Regime 1 (low vol): 1/(1−0.99753) ≈ **404 days**
-- Regime 2 (high vol): 1/(1−0.99373) ≈ **160 days**
+- Regime 1 (low vol): 1/(1−0.99753) ≈ **404 trading days**
+- Regime 2 (high vol): 1/(1−0.99373) ≈ **160 trading days**
 
 Both regime *durations* are longer than their respective *within-regime
 half-lives* — expected, since a regime can persist long after most of a
@@ -179,18 +218,31 @@ of Regime 2 containing a smaller number of observations (~28% of 4,175 ≈
 1,183 days) than Regime 1, reducing the precision with which a shape
 parameter like ν can be pinned down.
 
+A naive 95% Wald interval (ν₂ ± 1.96 × SE = 22.0 ± 1.96 × 16.85) would
+give approximately [−11, 55], but this interval is not meaningful here: ν
+is a bounded parameter (it must exceed 2 for the variance to exist), and
+the Wald construction — symmetric around the point estimate, assuming
+approximate normality — respects neither that boundary nor the typically
+skewed sampling distribution near it. The negative lower bound should
+never be quoted or interpreted. A proper interval would require a
+likelihood-profile approach, not attempted here. The practical consequence
+is unchanged: this estimate should not be treated as precise.
+
 ## 5. Comparison with the single-regime GARCH (`GARCH_1_1.md`)
 
 | | Single-regime (Student's t) | MS-GARCH (K=2) |
 |---|---|---|
+| Free parameters | 5 (μ, ω, α, β, ν) | 10 |
 | Log-likelihood | -2818.39 | -2806.64 (+11.75) |
 | AIC | 5646.78 | **5633.27** (-13.51, favors MS-GARCH) |
 | BIC | 5678.46 | 5696.64 (**+18.18, favors single-regime**) |
 
 **AIC and BIC disagree** — a common and expected outcome when comparing a
 regime-switching model to its single-regime counterpart: AIC penalizes
-extra parameters less severely than BIC, and MS-GARCH adds 6 parameters
-over the single-regime model (10 vs. 4). This is reported plainly as a
+extra parameters less severely than BIC, and MS-GARCH adds 5 parameters
+over the single-regime model (10 vs. 5; the single-regime fit estimates a
+constant mean that the MS-GARCH specification does not, so the two models
+also differ in their mean specification). This is reported plainly as a
 genuine ambiguity, not resolved in favor of either model — the honest
 conclusion is that **the added complexity of MS-GARCH buys a real but
 modest improvement in fit, at a parameter cost that BIC judges as not
@@ -203,11 +255,15 @@ for parsimony/true-model-identification-oriented use).
 
 This check was run specifically because a first look at regime
 classifications by year (using the Viterbi path, the single most likely
-regime per day) showed 2020 spending only 36 out of 249 trading days
+regime per day; see the provenance note in section 8) showed 2020 spending
+only 36 out of 250 trading days
 (≈14%) in the high-volatility regime — surprisingly low compared to
-2010-2012 (Eurozone debt crisis years, 39-100% high-vol days) and 2022
-(81% high-vol days). This was investigated rather than assumed to be
-either a genuine economic finding or a model flaw.
+2010 (100% of days) and 2011 (81-84%), Eurozone debt crisis years, and
+2022 (80-84%). (The ranges reflect the two classification rules: the
+Viterbi path, and a 50% cutoff on the smoothed probabilities saved in
+`ms_garch_regime_probs.csv`. 2012, sometimes grouped with the crisis
+years, is at 0% under both rules.) This was investigated rather than
+assumed to be either a genuine economic finding or a model flaw.
 
 ### 6.1 What the smoothed probabilities actually show
 
@@ -226,18 +282,31 @@ day around the shock:
 | 2020-04-17 | 25.4% |
 | 2020-04-30 | 14.9% |
 
-**The model did detect the shock clearly and quickly** — the probability
-rises from 9% to over 99% in about three weeks (Feb 18 – Mar 11), exactly
-tracking the real-world COVID market panic, then decays back down over
-the following six weeks.
+**In hindsight, the model identifies the shock clearly and quickly** —
+the probability rises from 9% to over 99% in about three weeks (Feb 18 –
+Mar 11), exactly tracking the real-world COVID market panic, then decays
+back down over the following six weeks.
+
+**These are smoothed probabilities, not a real-time signal.** The value
+shown for a given day uses observations up to the end of the sample,
+including the days that followed. The table describes *when* the regime
+shifted, not what a user would have known on that day. The real-time
+behaviour is measured in `covid_robustness_test.md`, with a model
+estimated on pre-2020 data only: the predicted probability of the stress
+regime at forecast time was 0.3% on 21 and 27 February, 2.5% on 2 March,
+49.3% on 6 March and 98.7% on 12 March. That is a different model and a
+different quantity (predicted, not smoothed), so the two series are not
+strictly comparable, but a lag of roughly one to two weeks relative to the
+smoothed trajectory above is the relevant order of magnitude for an
+operational user.
 
 ### 6.2 Why the annual Viterbi count was misleading
 
 The Viterbi path only records which regime has the *higher* probability
 on a given day (a binary >50% cutoff), collapsing a smooth, informative
 probability trajectory into a coarse yes/no label. The elevated-probability
-window here (roughly Feb 26 – Apr 13, about 40 trading days above 50%) is
-of a similar order to the 36-day count found — the annual tally was not
+window here (Feb 25 – Apr 9, 33 consecutive trading days above 50%) is
+close to the 36-day count found — the annual tally was not
 wrong, but it **discards the shape of the transition**: a genuinely fast,
 extreme spike (9% → 99.998% in three weeks) looks statistically identical
 in a simple day-count to a slower, weaker one that happens to cross 50%
@@ -252,38 +321,68 @@ treated as a simplification, not a substitute for it.
 
 Bringing sections 4-6 together into plain economic terms:
 
-- EUR/USD alternates between two structurally different volatility
-  worlds: a **calm regime** (σ ≈ 0.21, occurring ~72% of the time,
-  persisting on average over a year once entered) and a **stress regime**
-  (σ ≈ 0.73 — more than 3.5x as volatile — occurring ~28% of the time,
-  persisting on average about 5-6 months).
-- Within a stress regime, the intensity of shocks fades **faster**
-  (half-life ~64 days) than within a calm regime shocks fade
-  (~237 days) — stress is sharp but comparatively short-lived at the
-  shock level, even though the *regime itself* (the Markov state) can
-  still take months to fully resolve.
-- The model responds to a real, sudden crisis (COVID, March 2020) within
-  about three weeks, moving from near-certainty of "calm" to
-  near-certainty of "stress" — a genuinely fast, usable early-warning
-  signal, not merely a slow-moving average.
+- EUR/USD alternates between two distinct volatility regimes: a **calm
+  regime** (realized daily volatility ≈ 0.44 on the days it dominates,
+  occurring ~72% of the time, lasting on average about 404 trading days,
+  i.e. roughly 1.6 years, once entered) and a **stress regime** (≈ 0.70 on
+  the days it dominates — about 1.6x as volatile — occurring ~28% of the
+  time, lasting on average about 160 trading days, i.e. roughly 7-8
+  months). The model-implied long-run σ (0.21 vs. 0.73) exaggerates this
+  gap and is imprecise (section 4.2).
+- In the point estimates, the intensity of shocks within a stress regime
+  fades **faster** (half-life ~64 days) than within a calm regime
+  (~237 days) — stress would be sharp but comparatively short-lived at
+  the shock level, even though the *regime itself* (the Markov state) can
+  still take months to fully resolve. This difference is not
+  statistically established (section 4.3) and should be read as
+  suggestive.
+- In hindsight, the model places the real, sudden crisis (COVID, March
+  2020) within about three weeks, moving from near-certainty of "calm" to
+  near-certainty of "stress". That is a retrospective description of when
+  the regime shifted; as an operational early-warning signal it lagged by
+  roughly one to two weeks in the out-of-sample test (section 6.1).
 - Compared to a single, undifferentiated GARCH (`GARCH_1_1.md`), this
-  model offers a materially better description of how volatility actually
-  evolves (matching the instability finding in `garch_stability.md`): it
-  explicitly answers "which of two regimes are we in", rather than
-  averaging both regimes' dynamics into one fixed set of parameters — at
-  the acknowledged cost of a heavier, harder-to-estimate model whose
-  benefit is judged worthwhile by one standard criterion (AIC) and not
-  worthwhile by another (BIC).
+  model offers a genuinely different, regime-aware description of
+  volatility: it explicitly answers "which of two regimes are we in",
+  rather than averaging both regimes' dynamics into one fixed set of
+  parameters. Note that the formal test in `garch_stability.md` did **not**
+  establish that the single-regime model's parameters are statistically
+  unstable across time (likelihood-ratio test, p = 0.277): the motivation
+  for MS-GARCH rests more defensibly on its being the theoretically
+  appropriate tool for regime-dependent dynamics and on its AIC advantage
+  (section 5) than on a proven instability of the simpler model — at the
+  acknowledged cost of a heavier, harder-to-estimate model whose benefit
+  AIC judges worthwhile and BIC does not.
 
 ## 8. Known limitations
 
 - MSGARCH's likelihood is exact for the (more restricted) Haas et al. (2004a) specification it implements — it is not an approximation of that model. What remains genuinely intractable is the fully general path-dependent MS-GARCH likelihood (section 1); MSGARCH avoids that intractability by using a different, deliberately more restricted model, not by approximating the general one.
 - ν₂ (regime 2's tail parameter) is imprecisely estimated (section 4.4);
   should not be over-interpreted on its own.
+- The difference in persistence between the two regimes (section 4.3) is
+  not tested; the half-lives are point estimates, sensitive to α+β near 1.
+- The long-run σ figures implied by the parameters (0.206 and 0.730) rest
+  on ω, which is not significant in either regime, and on a denominator
+  1−α−β close to zero: they are imprecise, and their ratio (3.5) is well
+  above the ratio of realized volatilities on the days each regime
+  dominates (1.6) (section 4.2).
 - AIC and BIC disagree on whether the added complexity is justified
   (section 5) — this project does not adjudicate between the two criteria,
   reporting the disagreement instead of picking a side to force a clean
-  narrative.
+  narrative. The two models also differ in their mean specification
+  (constant mean estimated in the single-regime fit, none here).
+- The regime probabilities analysed in section 6 are smoothed (ex post).
+  A real-time user would rely on filtered or predicted probabilities,
+  which react later (section 6.1).
+- **The Viterbi path used in section 6 is not produced by any script
+  currently in the project.** `ms_garch.R` as written exports only the
+  smoothed regime probabilities (`ms_garch_regime_probs.csv`) from the
+  `State()` output; the Viterbi classification behind the opening
+  paragraph and the year-by-year day counts of section 6 was generated in
+  an interactive session and not captured in a saved script. Anyone
+  reproducing this analysis from the repository alone would need to add an
+  extraction of the Viterbi path from the `State()` output
+  (`state_probs_obj` in `ms_garch.R`) themselves — not yet done.
 - K=2 was not compared against K=3 at this stage (see section 2's
   rationale for starting at 2); a natural extension, not yet undertaken.
 - This stage depends on R and the MSGARCH package — a deliberate,
@@ -294,8 +393,13 @@ Bringing sections 4-6 together into plain economic terms:
 ## 9. Files produced at this stage
 
 - `src/ms_garch.R` — model specification, ML fitting, per-regime parameter
-  extraction, transition matrix, and smoothed regime probability export
+  extraction, transition matrix, smoothed regime probability export, and
+  export of the plain numeric estimates
 - `data/processed/ms_garch_transition_matrix.csv`
 - `data/processed/ms_garch_regime_probs.csv` — per-day smoothed
   probabilities for both regimes, aligned with EUR/USD trading dates
-
+- `data/processed/ms_garch_par.rds` — plain numeric estimates only
+  (`par`, `loglik`, `MatCoef`), used by `ms_garch_forecast.R` and the
+  downstream forecasting scripts (see `price_range.md`); the fit object
+  itself is deliberately not saved, because its Rcpp external pointer
+  becomes invalid after reloading

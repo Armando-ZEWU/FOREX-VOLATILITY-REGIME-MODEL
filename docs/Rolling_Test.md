@@ -35,16 +35,19 @@ publication lag or a request issue; not resolved at the time of writing
 `https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXUSEU&cosd=2026-09-01&coed=2026-09-18`).
 As a documented workaround, the existing FRED history was extended with
 independently-sourced Close values (Pound Sterling Live) for 2026-09-14
-through 2026-09-17 — the same source and discrepancy order already noted
-for 2026-09-11 (FRED = 1.1604 vs. this source's 1.1599, ≈0.05%) in
-`price_range.md`, section 7.1.
+through 2026-09-17 — the same source and discrepancy already noted for
+2026-09-11 (FRED = 1.1604 vs. this source's 1.1599, ≈0.04%) in
+`price_range.md`, section 7.1. The two are not the same quantity: FRED's
+`DEXUSEU` is the Federal Reserve's noon buying rate in New York (H.10
+release), whereas Pound Sterling Live reports an end-of-day close (see
+section 5.2).
 
 ## 3. Results (Close-to-Close)
 
 | Forecast | Cutoff price | Range | Width | Actual (Close) | Result | P(calm) at cutoff | P(stress) at cutoff |
 |---|---|---|---|---|---|---|---|
 | 1 (→09-14) | 1.1604 | [1.1533, 1.1675] | 1.22% | 1.1549 | **Inside** | 99.4% | 0.6% |
-| 2 (→09-15) | 1.1549 | [1.1478, 1.1620] | 1.23% | 1.1542 | **Inside** | 98.9% | 1.1% |
+| 2 (→09-15) | 1.1549 | [1.1477, 1.1620] | 1.23% | 1.1542 | **Inside** | 98.9% | 1.1% |
 | 3 (→09-16) | 1.1542 | [1.1471, 1.1613] | 1.23% | 1.1464 | **Outside** | 99.2% | 0.8% |
 | 4 (→09-17) | 1.1464 | [1.1390, 1.1538] | 1.29% | 1.1459 | **Inside** | 97.0% | 3.0% |
 
@@ -52,15 +55,15 @@ for 2026-09-11 (FRED = 1.1604 vs. this source's 1.1599, ≈0.05%) in
 
 ### 3.1 Adding Open, High, Low — a more complete, slightly less favorable picture
 
-The model is calibrated on close-to-close returns, so Close is the
-correct primary comparison (as already established in `price_range.md`,
-section 7.2). But checking the full daily range against each forecast
+The model is calibrated on day-to-day changes of a daily reference rate,
+so the daily Close is the closest primary comparison (as established in
+`price_range.md`, section 7.2, including its source caveat). But checking the full daily range against each forecast
 band reveals a nuance not visible from Close alone:
 
 | Target | Range | Open | High | Low | Close |
 |---|---|---|---|---|---|
 | 09-14 | [1.1533, 1.1675] | 1.1597 (in) | 1.1601 (**in**) | 1.1523 (**OUTSIDE**) | 1.1549 (in) |
-| 09-15 | [1.1478, 1.1620] | 1.1549 (in) | 1.1553 (in) | 1.1527 (in) | 1.1542 (in) |
+| 09-15 | [1.1477, 1.1620] | 1.1549 (in) | 1.1553 (in) | 1.1527 (in) | 1.1542 (in) |
 | 09-16 | [1.1471, 1.1613] | 1.1542 (in) | 1.1557 (in) | 1.1461 (**OUTSIDE**) | 1.1464 (**OUTSIDE**) |
 | 09-17 | [1.1390, 1.1538] | 1.1464 (in) | 1.1473 (in) | 1.1457 (in) | 1.1459 (in) |
 
@@ -106,11 +109,16 @@ bad) calibration.** Any claim that "the model captures uncertainty well"
 based on this alone would be an unsupported generalization from a
 minuscule sample.
 
+For scale: even if the 95% interval were perfectly calibrated and breaches
+were independent, the probability of observing at least one breach in 4
+days is 1 − 0.95⁴ ≈ 18.5% — a single breach in 4 days is an ordinary
+outcome.
+
 ### 5.2 The Close-based miss (forecast 3, →09-16): two distinct explanations, correctly separated
 
 The breach was marginal: actual 1.1464 vs. lower bound 1.1471, a gap of
-0.0007 (≈0.061% of price, about 7 pips) — right at the edge, not a
-dramatic failure.
+0.0007 (0.000732 before rounding; ≈0.064% of price, about 7 pips) — right
+at the edge, not a dramatic failure.
 
 Two distinct hypotheses were considered for whether this represents a
 genuine model miss:
@@ -120,10 +128,20 @@ forecast for 09-16 is compared to Pound Sterling Live's reported close,
 while the model was calibrated on FRED data throughout its history. Since
 FRED's own value for 09-16 is unavailable (the exact reason the
 independent source was substituted in the first place), **it cannot be
-ruled out** that FRED's true close for that day would have fallen inside
-the range — the discrepancy already measured between the two sources on
-09-11 (≈0.05%) is of the same order as this breach (≈0.06%). **This
-remains genuinely unresolved with the data available.**
+ruled out** that FRED's value for that day would have fallen inside the
+range. The two sources are not the same quantity: FRED's `DEXUSEU` is the
+Federal Reserve's noon buying rate in New York, whereas Pound Sterling
+Live reports an end-of-day close. On the calm days of January-February
+2020 (`covid_robustness_test.md`, section 5) the absolute gap between the
+two averaged 0.069% (standard deviation 0.088%), and 17 of those 35 days
+showed a gap larger than this breach (0.064%); the single-day figure
+quoted above for 09-11 (≈0.04%) is one observation. In addition, the FOMC
+statement of 16 September was released at 2:00 p.m. ET — after a noon
+reference time and before an end-of-day close — so a noon value for that
+day would not contain the market's reaction to it, while the close does.
+**This remains genuinely unresolved with the data available**, but the
+breach is well within the range of gaps normally seen between the two
+quantities: it does not, on its own, point to a model failure.
 
 **(b) Contamination of the GARCH recursion via the one-time source switch
 (09-11→09-14) — a distinct, quantifiable channel.** The single switch from
@@ -153,10 +171,16 @@ hook" — it points the other way.
 ### 5.3 Regime reactivity: two competing hypotheses, correctly left undecided
 
 Regime probabilities over the chain: P(stress) = 0.6% → 1.1% → 0.8% →
-**3.0%**, while range width barely moved (1.22% → 1.23% → 1.23% → 1.29%).
-The model's sense of risk rose roughly 5x over the week but stayed
-anchored above 97% "calm" throughout, including immediately after the
-miss.
+**3.0%**, while range width barely moved (1.22% → 1.23% → 1.23% → 1.29%;
++5.6% between the first and the last). The model's sense of risk rose
+roughly 5x (0.56% → 3.01%) over the week but stayed anchored above 97%
+"calm" throughout, including immediately after the miss.
+
+Resolution note: `Risk()` returns its bounds on a numerical grid of step
+≈0.0068 percentage points of return (`price_range.md`, section 4.2), about
+0.56% of a 95% width. The difference between the second and third widths
+(1.234% vs. 1.227%) is about one grid step and should not be interpreted;
+the rise to 1.29% is about ten steps and is a genuine change.
 
 Two explanations are both consistent with this single observation, and
 **cannot be distinguished with only 4 data points**:
@@ -170,34 +194,45 @@ Two explanations are both consistent with this single observation, and
    genuinely volatile period — not detectable from one relatively mild
    week.
 
-**Next step required to actually decide between these**: rerun the same
+**Next step proposed to decide between these**: rerun the same
 frozen-parameter rolling chain over a historical window containing a real,
 sustained shock (e.g. February-April 2020, entirely within the project's
 existing FRED-sourced sample — avoiding any source-mixing caveat) and
-check whether the empirical coverage rate collapses. This is a natural,
-smaller-scale precursor to the full backtest still planned. See
-`covid_robustness_test.md` (planned).
+check whether the empirical coverage rate collapses. This has since been
+done in `covid_robustness_test.md`, with a model estimated on pre-2020 data
+only: coverage was 77/84 = 91.7% on the FRED rate (one-sided binomial
+p = 0.127), so no collapse, but the test has limited power. Its breaches
+occurred both before the stress probability had risen (P(stress) below
+50%) and after it exceeded 95%, so a lag in the early days of a shock is
+not ruled out. The question is narrowed, not settled. This is a natural,
+smaller-scale precursor to the full backtest still planned.
 
 ### 5.4 A methodological check on `set.seed()`, run and resolved
 
 An earlier version of `rolling_test_chain.R` called `set.seed(42)` inside
-the loop, once per iteration — a legitimate concern, since resetting an
-identical seed before each of several stochastic calls can introduce
-unwanted correlation across iterations rather than independent draws.
-**Fixed** by moving `set.seed(42)` to run once before the loop. Rerunning
-produced **numerically identical results** to the original (flawed)
-version, digit for digit — confirmed again when the script was further
-extended to compute multi-level bands for the fan charts (section 4).
+the loop, once per iteration. This would be a legitimate concern if
+`Risk()` were simulation-based, since resetting an identical seed before
+each call recycles the same random draws across iterations, introducing
+correlation between them rather than independent draws. **Fixed** by
+moving `set.seed(42)` to run once before the loop. Rerunning produced
+**numerically identical results** to the original version, digit for
+digit — confirmed again when the script was further extended to compute
+multi-level bands for the fan charts (section 4).
 
 **Why the fix made no difference here, checked rather than assumed**:
-`State()` (the Hamilton filter) is a deterministic recursion with no
-randomness involved. `Risk()` is called only once per iteration, with
-different data and thus a different target distribution each time — the
-risk the fix guards against (recycling identical draws across *repeated
-calls on the same input*) does not arise when every call already differs
-by construction. The fix remains worth keeping for future work (the
-planned larger-scale backtest, where the same concern could matter more,
-e.g. if `Risk()` were ever called multiple times on identical inputs).
+`State()` (the Hamilton filter) is a deterministic recursion. As for
+`Risk()`, identical results mean that it does not consume random numbers
+here (or fixes its own seed): with the seed reset at every iteration in
+the earlier version and set once in the fixed version, the state of the
+random-number generator at iterations 2 to 4 would differ between the two
+versions if `Risk()` drew random numbers, and the bounds would differ with
+it. Consistently, every bound in `rolling_fan_chart_inputs.csv` lies on a
+regular grid of step ≈0.0068 percentage points of return
+(`price_range.md`, section 4.2) — a deterministic numerical computation,
+not a simulation. The seed is therefore irrelevant to these results;
+keeping a single `set.seed()` before the loop is harmless, and is the
+correct pattern should a simulation-based call ever be used (e.g. in the
+planned larger-scale backtest).
 
 ## 6. Economic interpretation — what this chain means for someone watching the market
 
@@ -205,27 +240,33 @@ e.g. if `Risk()` were ever called multiple times on identical inputs).
   (→09-16), the one that missed: for a EUR 1,000,000 conversion decided on
   09-15's close, the model's 95% range implied proceeds between
   $1,147,100 and $1,161,300. The actual outcome ($1,146,400) fell about
-  $700 below even the pessimistic end of that range — on a $1.15M
+  $730 below even the pessimistic end of that range — on a $1.15M
   transaction, a shortfall equivalent to roughly 0.06% of the notional.
   Framed this way, even the one "miss" in this chain was a **near-miss in
   dollar terms**, not a scenario that would have caused a business
   meaningful, unplanned damage.
-- **The regime signal proved genuinely informative, just with a one-day
-  lag.** A treasury or trader watching P(stress) climb from under 1% to
-  3% between 09-15 and 09-16 would have received their first quantified
-  warning sign of elevated risk on the **day after** the FOMC shock had
-  already occurred — useful for adjusting the following days' hedging
-  posture (consistent with forecast 4's wider range, 1.29% vs. the
-  earlier ~1.22-1.23%), but not useful for having avoided the shock
-  itself. This is the practical meaning of "reactive, not predictive":
-  the tool tells you the ground has shifted once it has, not before.
-- **The single miss occurred exactly where theory says it should.**
+- **The regime signal moved in the right direction, with the inherent
+  one-day lag.** A treasury or trader watching P(stress) climb from under
+  1% to 3% between the 09-15 and 09-16 cutoffs would have received a first
+  quantified warning sign of elevated risk on the evening of the FOMC day
+  itself (once that day's close was known; the FOMC statement was released
+  at 2:00 p.m. ET on 16 September), for use on the following day — useful
+  for adjusting the following days' hedging posture (consistent with
+  forecast 4's wider range, 1.29% vs. the earlier ~1.22-1.23%), but not
+  useful for having avoided the shock itself. Even at 3.0%, the model
+  remained 97% "calm", so this is a signal of direction, not of level.
+  This is the practical meaning of "reactive, not predictive": the tool
+  tells you the ground has shifted once it has, not before.
+- **The single miss falls on the day the framework would flag as
+  structurally unforecastable — consistent with it, not evidence of it.**
   Every prior section of this project (weak-form market efficiency,
   Meese & Rogoff) predicts that a model built from past prices cannot see
-  a future central bank decision coming. This chain's one breach lines up
-  exactly with that decision — not a random day, not a data anomaly, but
-  the one day this project's own framework would flag in advance as
-  structurally unforecastable.
+  a future central bank decision coming. The FOMC statement was released on
+  16 September at 2:00 p.m. ET, the day of this chain's one Close-based
+  breach (forecast 3). That is what the framework would lead one to
+  expect, but it rests on a single observation (section 5.1) and on a
+  breach of only ≈0.064%, within the typical gap between the two price
+  sources (section 5.2(a)).
 
 ## 7. What this means in practice for a user of the model
 
@@ -254,8 +295,14 @@ very test) and what has not.
 
 ## 9. What remains open
 
-- The historical stress-window test proposed in section 5.3, to actually
-  distinguish "expected frozen-parameter behavior" from "structural
-  reactivity problem" — not yet run.
+- The historical stress-window test proposed in section 5.3 has been run
+  (`covid_robustness_test.md`); it narrows but does not settle the
+  distinction between "expected frozen-parameter behavior" and "structural
+  reactivity problem" (section 5.3).
+- The Open/High/Low values of section 3.1 (Pound Sterling Live) exist only
+  as the table of this document; no CSV holds them
+  (`rolling_test_chain_result.csv` carries only the Close). A raw file
+  analogous to `eurusd_ohlc_2020_covid.csv` should be added — not yet
+  done.
 - The full backtest (many more one-step forecasts, empirical coverage
   rate vs. nominal 95%) — still the next planned major stage.

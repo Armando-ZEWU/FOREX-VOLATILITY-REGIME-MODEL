@@ -29,9 +29,8 @@ than assuming the documented behavior held exactly as expected.
 
 **Fix**: `Risk()`, the package's purpose-built function for Value-at-Risk
 and Expected-Shortfall, computes quantiles of the full predictive density
-directly (via numerical integration/simulation internal to the package),
-without relying on a `$draw` field that turned out not to be populated
-here.
+directly (numerically, on a grid — see section 4.2), without relying on a
+`$draw` field that turned out not to be populated here.
 
 ### 2.2 A convention trap in Risk()'s `alpha` argument
 
@@ -101,10 +100,13 @@ following a direct request to leave nothing out:
   average loss beyond the VaR threshold) was not requested, since it
   answers a different question (tail severity, not a two-sided range) not
   part of this deliverable's scope.
-- **`set.seed(42)` before calling `Risk()`.** `Risk()`'s underlying
-  computation may involve simulation; a fixed seed makes the reported
-  quantiles exactly reproducible across runs, rather than varying by a
-  small amount each time the script is re-executed.
+- **`set.seed(42)` before calling `Risk()`.** Kept as a precaution in case
+  `Risk()`'s computation involves simulation. In this pipeline it has no
+  observable effect: the single-level call (section 3) and the multi-level
+  call used for the fan chart (section 8), made later in the same script
+  without re-seeding, return identical 95% bounds to every printed digit,
+  and the bounds lie on a regular numerical grid (section 4.2). The seed is
+  therefore not what makes the results reproducible here.
 - **An explicit sanity check (`q_low >= q_high` triggers a warning).**
   Added defensively after the `alpha` convention trap (section 2.2) was
   identified, specifically to catch a repeat of that kind of mistake
@@ -132,6 +134,12 @@ parameter, which dominates the mixture given its 99.4% weight): -1.998.
 The close match confirms `Risk()` is genuinely using the model's Student's
 t predictive distribution, not silently falling back to a Normal
 approximation — a real verification, not an assumption taken on faith.
+
+At the 95% level this check has limited power to tell a Student's t from a
+Normal: the two quantiles differ by only 2% (1.998σ against 1.960σ). The
+80% level of the fan chart (section 8) discriminates better: the mixture's
+80% bounds are at −1.212σ and +1.185σ, i.e. about 1.20σ on average, against
+1.197σ for a standardized Student's t (ν ≈ 7.07) and 1.282σ for a Normal.
 
 ## 4. Rigorous result vs. genuine regime-conditional forecast
 
@@ -172,22 +180,31 @@ As of 2026-09-11 (EUR/USD = 1.1604):
 
 The stress-regime range is genuinely (not approximately) **1.88x wider**
 than the calm-regime range — a direct consequence of regime 2's own
-one-step-ahead volatility being nearly double regime 1's (0.577 vs 0.303),
-compounded by its much heavier tail (ν₂ ≈ 22 turned out closer to Normal
-than expected, per `ms_garch.md` section 4.4 — meaning the width
-difference here comes almost entirely from the volatility gap, not the
-tail shape, since a higher ν narrows the relative tail contribution).
+one-step-ahead volatility being nearly double regime 1's (0.577 vs 0.303,
+a ratio of 1.90). The tail shape plays only a small role, and in the
+opposite direction: regime 2's tail is *lighter* (ν₂ ≈ 22, closer to
+Normal than expected, per `ms_garch.md` section 4.4) than regime 1's
+(ν₁ ≈ 7), which reduces the ratio very slightly at the 95% level (1.88x
+against a volatility ratio of 1.90).
 
 **Note on the mixture's small asymmetry**: `Risk()`'s reported 95% interval
 (-0.6143 / +0.6061) is very slightly asymmetric, even though the model has
 no mean term (`MSGARCH` assumes zero mean throughout — no `mu` parameter
 is estimated) and each individual regime's Student's t distribution is
 exactly symmetric about zero. A mixture of two zero-centered symmetric
-distributions is itself theoretically symmetric; the small observed
-asymmetry (≈1.3% relative difference between the two bounds) is most
-likely Monte Carlo simulation noise in `Risk()`'s internal computation
-(consistent with using simulation rather than a closed-form mixture
-quantile), not a genuine property of the model.
+distributions is itself theoretically symmetric, and its exact 95%
+quantiles, computed from the published parameters and the current regime
+weights, are ±0.611. The reported bounds deviate from that value by less
+than 1% (≈1.3% between the two bounds), and the deviation is systematic
+rather than random: at all four confidence levels of the fan chart
+(section 8) the midpoint of the lower and upper bounds is the same,
+−0.0041 (in % of log-return), and every bound reported by `Risk()`, across
+all levels and across the forecasts of `rolling_test.md`, lies on a
+regular grid of step ≈0.0068 percentage points of return (about 0.56% of
+the 95% interval's width). The asymmetry is therefore a grid effect of
+`Risk()`'s numerical computation — not Monte Carlo noise, and not a
+property of the model. It is immaterial for the price range (about 0.00005
+in price).
 
 ### 4.3 Why this matters, beyond just being "more correct"
 
@@ -213,11 +230,12 @@ trading-day observation** in the series — in this case, **Monday,
 
 **A further, more substantive caveat**: the real FX market trades
 continuously from Sunday evening to Friday evening (New York time), unlike
-the once-daily `DEXUSEU` reference rate the model was calibrated on. A full
+the once-daily `DEXUSEU` reference rate (a noon New York rate) the model
+was calibrated on. A full
 weekend of news (central bank commentary, geopolitical events) can occur
 between the Friday close and the Monday reopen that the model has **never
 observed as a distinct event** — it was calibrated purely on day-to-day
-closes, with no explicit "weekend gap" component. Practically: a Monday's
+changes of that reference rate, with no explicit "weekend gap" component. Practically: a Monday's
 actual move could fall outside the 95% range more often than an
 "average" weekday would, purely because weekends can carry more
 unobserved information than a single weekday gap. This is a known
@@ -293,20 +311,26 @@ Open, Close, and High all fall inside the forecast range. The intraday
 the reference price — about ten pips).
 
 **The most relevant comparison is to the Close (1.1549), not the intraday
-Low.** The GARCH model was calibrated on close-to-close log returns
-(`features.py`, `GARCH_1_1.md`) — it was never built to predict intraday
-extremes (the High-Low range within a single day), only the size of the
-close-to-close move. Judged against the quantity it was actually built to
-forecast, the Close falls comfortably inside the range: a genuine success
-on the model's own terms. The Low breaching the band is a data point about
-a different question (intraday range) that this model does not address —
-worth noting, not a failure of what was actually forecast.
+Low.** The GARCH model was calibrated on day-to-day log returns of the
+daily FRED reference rate (`features.py`, `GARCH_1_1.md`) — it was never
+built to predict intraday extremes (the High-Low range within a single
+day), only the size of the day-to-day move. Judged against that quantity,
+the Close falls comfortably inside the range: consistent with the model,
+though only indicatively (see the source caveat below). The Low breaching
+the band is a data point about a different question (intraday range) that
+this model does not address — worth noting, not a failure of what was
+actually forecast.
 
-A minor, expected data discrepancy: this project's own pipeline recorded
-the 2026-09-11 reference price as 1.1604 (FRED's `DEXUSEU`), while this
-independent source reports a Close of 1.1599 for the same day — a ~0.05%
-difference, consistent with different providers snapshotting the rate at
-different times, not an error in either source.
+**Source caveat**: this project's own pipeline recorded the 2026-09-11
+reference price as 1.1604 (FRED's `DEXUSEU`), while this independent source
+reports a Close of 1.1599 for the same day — a ~0.04% difference. The two
+are not the same quantity: `DEXUSEU` is the Federal Reserve's noon buying
+rate in New York (H.10 release), not an end-of-day close, so the model
+forecasts the next noon reference rate while Pound Sterling Live reports
+the end-of-day close. The gap is small on a calm day but can be much
+larger in volatile ones (on average 0.22% between 24 February and 30 April
+2020, up to 1.14%; see `covid_robustness_test.md`, section 5), so this
+comparison is indicative, not exact.
 
 ### 7.3 Critical caveat: this is one observation, not a validation
 
@@ -346,10 +370,12 @@ calm regime certain, stress regime certain):
 | 95% | 1.220% | 1.212% | 2.282% | 1.88x |
 
 The bands are properly nested at every level (20% ⊂ 50% ⊂ 80% ⊂ 95%) and
-widen at an accelerating rate toward the tails in all three panels —
-consistent with the fat-tailed Student's t distribution underlying the
-model, rather than the more evenly-spaced widening a Normal distribution
-would produce.
+widen faster than linearly toward the tails in all three panels, as a
+Normal distribution would also do. What distinguishes the model is the
+degree: the 95% band is about 9.0 times as wide as the 20% band in the
+mixture and calm panels (8.1 times in the stress panel), against 7.7 times
+for a Normal distribution — the signature of the heavier tails of the
+Student's t distribution underlying the model.
 
 Chart saved to `docs/fan_chart.png`.
 
@@ -363,24 +389,27 @@ range" right now.
 **Stress regime — the part of this chart that actually shows the model's
 value**: at every confidence level, the stress-regime band is **roughly
 twice as wide** as the calm-regime band — but that ratio is not constant,
-and the way it changes is itself informative. At the narrower, more
-central levels (20%, 50%), the stress band is about **2.07-2.09x** wider
-than calm — close to the ratio of the two regimes' one-step volatility
-forecasts themselves (0.577/0.303 ≈ 1.90, in the same range). But at the
-wide 95% level, the ratio narrows to **1.88x**. This is a direct,
-visible consequence of the two regimes' different tail shapes documented
-in `ms_garch.md` (section 4.4): the calm regime's fatter tail (ν₁ ≈ 7)
-inflates its own far-tail width disproportionately more than the stress
-regime's thinner, closer-to-Normal tail (ν₂ ≈ 22) inflates its already-wide
-band — so the *relative* gap between the two regimes compresses somewhat
-at the most extreme confidence level, even though the *absolute* gap
-still grows.
+and the way it changes is itself informative. It is **2.09x, 2.07x and
+2.00x** at the 20%, 50% and 80% levels, i.e. about 5-10% *above* the ratio
+of the two regimes' one-step volatility forecasts (0.577/0.303 ≈ 1.90),
+and **1.88x** at the 95% level, essentially equal to it. If the two
+regimes had the same distribution shape, the ratio would be constant and
+equal to 1.90; the deviations measure the effect of the different shapes
+documented in `ms_garch.md` (section 4.4). At a given variance, a
+fat-tailed distribution puts more mass near the center, so the calm
+regime's central band is narrower than a near-Normal one would be: at the
+20% level the half-width is 0.223σ for the calm regime (ν₁ ≈ 7) against
+0.245σ for the stress regime (ν₂ ≈ 22; a Normal gives 0.253σ). This
+inflates the stress/calm ratio at the central levels. In the far tail the
+two shapes give nearly the same multiple of σ (1.998σ against 1.977σ at
+95%), and the ratio falls back to the volatility ratio. The *absolute* gap
+between the two bands still grows with the confidence level.
 
 **What this means for someone reading the chart, not just the numbers**:
 the stress panel isn't simply "the calm panel stretched by a constant
-factor" — it has a genuinely different shape, narrower in relative terms
-at its most extreme edge than at its center, because a fundamentally
-different tail-risk profile underlies it. A viewer scanning only the width
+factor" — it has a genuinely different shape, relatively narrower
+at its most extreme edge than at its center, because the two regimes have
+different distribution shapes. A viewer scanning only the width
 at 95% would actually slightly *understate* how much riskier the central,
 day-to-day experience of the stress regime is compared to calm (the 20%
 and 50% ratios, ~2.1x, are larger than the headline 95% ratio, ~1.88x) —
@@ -389,14 +418,21 @@ about regime risk at every horizon.
 
 ## 9. Files produced at this stage
 
+- `src/ms_garch_forecast.R` — one-step-ahead forecast for each regime
+  (manual recursion, validated against `Risk()`), 95% range via `Risk()`,
+  multi-level call for the fan chart, and regime-conditional quantiles
 - `src/price_range.py` — `compute_price_range` (log-return interval to
   price conversion), main script producing the rigorous range and the
   labeled illustrative regime comparison
 - `src/fan_chart.py` — multi-band price conversion and fan chart plotting
 - `data/processed/price_range_output.csv` — the operational result
   (date, last price, confidence level, P_min, P_max, range width)
-- `data/processed/ms_garch_fan_chart_inputs.csv` — return quantiles at 7
-  confidence levels
+- `data/processed/ms_garch_price_range_inputs.csv` — return quantiles at
+  the 95% level, forecast volatility and current regime probabilities
+- `data/processed/ms_garch_fan_chart_inputs.csv` — return quantiles at 4
+  confidence levels (20%, 50%, 80%, 95%)
+- `data/processed/ms_garch_regime_conditional_forecast.csv` — the same 4
+  levels for each regime taken as certain (calm / stress)
 - `docs/fan_chart.png` — the rendered fan chart
 
 ## 10. Status of the project's objective (b)

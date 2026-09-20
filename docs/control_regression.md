@@ -207,6 +207,29 @@ horizons and in other specifications — only that, in this specific
 one-day-ahead, level/return specification, they add no exploitable
 information.
 
+### 6.2 A robustness check on standard errors, prompted by diff_rate's high autocorrelation
+
+`diff_rate` (the level of the Fed-ECB rate differential) is extremely
+persistent — autocorrelation of 0.998 at lag 1, still 0.98 at lag 20 (an
+expected property of a policy-rate-level series, which moves in rare,
+discrete steps and stays flat between them; see the same point made about
+its step-function nature in `methodology.md`, section 4.1). This raised a
+concern: the HAC (Newey-West) standard errors reported in section 5 used
+`maxlags=5`, which may be insufficient to fully correct for
+autocorrelation this persistent — an under-corrected standard error would
+be too small, potentially overstating significance.
+
+**Check performed**: re-running the extended specification with
+`maxlags=10` and `maxlags=20` in `run_ols()`. The result does not change
+in any way that matters: `diff_rate` and every other coefficient remain
+far from conventional significance thresholds regardless of the lag
+choice. This is the expected outcome, not a surprising one — `maxlags=5`
+being too short would, if anything, have *understated* the true standard
+errors, meaning the already-not-significant result would only become
+*more* clearly non-significant with a longer lag window, never less. The
+robustness check confirms this rather than overturning anything in
+section 5-6's conclusions.
+
 ## 7. Files produced at this stage
 
 - `src/control_variables_loader.py` — FRED loaders for `DFF`, `ECBDFR`,

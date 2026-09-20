@@ -46,9 +46,9 @@ save_fig <- function(plot, filename, width = 7, height = 4.5) {
 
 # ---- 1. Chargement des données -------------------------------------------
 mag_df <- read_csv(file.path(processed_dir, "magnitude_regression_dataset.csv"),
-                    col_types = cols(Date = col_date(), r_t = col_double(),
-                                      abs_r_t = col_double(), sigma_t = col_double(),
-                                      delta_y_t = col_double(), abs_r_t_plus_1 = col_double()))
+                   col_types = cols(Date = col_date(), r_t = col_double(),
+                                    abs_r_t = col_double(), sigma_t = col_double(),
+                                    delta_y_t = col_double(), abs_r_t_plus_1 = col_double()))
 
 # ==============================================================================
 # GRAPH 1 — Spec A : |r(t+1)| vs delta_y(t), avec droite OLS
@@ -57,7 +57,7 @@ g1 <- ggplot(mag_df, aes(x = delta_y_t, y = abs_r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "steelblue4") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "Spec A — |r(t+1)| vs. \u0394y(t)",
-       subtitle = "b\u2081 \u2248 -0.087, p = 0.583 — le choc (variation) n'explique pas la magnitude",
+       subtitle = str_wrap("b\u2081 \u2248 -0.087, p = 0.583 — le choc (variation) n'explique pas la magnitude", width = 65),
        x = "\u0394y(t) = ln(\u03c3(t)/\u03c3(t-1))", y = "|r(t+1)| (%)")
 
 save_fig(g1, "01_specA_scatter_deltay.png")
@@ -69,7 +69,7 @@ g2 <- ggplot(mag_df, aes(x = sigma_t, y = abs_r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "darkorange3") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "Spec B — |r(t+1)| vs. \u03c3(t) (niveau)",
-       subtitle = "b\u2081 \u2248 0.703, p < 0.001, R\u00b2 = 0.090 — le niveau explique la magnitude",
+       subtitle = str_wrap("b\u2081 \u2248 0.703, p < 0.001, R\u00b2 = 0.090 — le niveau explique la magnitude", width = 65),
        x = "\u03c3(t) — volatilité conditionnelle", y = "|r(t+1)| (%)")
 
 save_fig(g2, "02_specB_scatter_sigma.png")
@@ -102,7 +102,7 @@ sig_df <- tibble(
   spec = rep(c("Spec A (\u0394y(t))", "Spec B (\u03c3(t) niveau)"), each = 2),
   variable = rep(c("Variable de choc", "|r(t)|"), times = 2),
   coef = c(-0.0871, 0.1148,   # Spec A: delta_y_t, abs_r_t
-            0.7029, 0.0269),  # Spec B: sigma_t, abs_r_t
+           0.7029, 0.0269),  # Spec B: sigma_t, abs_r_t
   p = c(0.583, 5.29e-11,
         1.56e-67, 0.101)
 ) %>%
@@ -115,7 +115,7 @@ g4 <- ggplot(sig_df, aes(x = variable, y = neg_log10_p, fill = significatif)) +
   facet_wrap(~spec) +
   scale_fill_manual(values = c("Significatif (p<0.05)" = "firebrick", "Non significatif" = "grey60")) +
   labs(title = "La significativité bascule entre |r(t)| et la variable de choc",
-       subtitle = "Ligne pointillée = seuil p = 0.05 (-log10(0.05) \u2248 1.30)",
+       subtitle = str_wrap("Ligne pointillée = seuil p = 0.05 (-log10(0.05) \u2248 1.30)", width = 65),
        x = NULL, y = "-log10(p-value)", fill = NULL)
 
 save_fig(g4, "04_significance_flip.png", width = 8, height = 4.5)
@@ -141,7 +141,7 @@ g5 <- ggplot(pred_df, aes(x = sigma_t, y = pred)) +
   geom_text(data = pct_df, aes(x = x, y = pred, label = paste0(percentile, "\n", round(pred, 2), "%")),
             vjust = -0.6, size = 3.2, color = "steelblue4") +
   labs(title = "|r(t+1)| prédit selon \u03c3(t) — repères P10/P50/P90",
-       subtitle = "Repères choisis pour être représentatifs (voir note de script sur les exemples du document)",
+       subtitle = str_wrap("Repères choisis pour être représentatifs (voir note de script sur les exemples du document)", width = 65),
        x = "\u03c3(t)", y = "|r(t+1)| prédit (%)")
 
 save_fig(g5, "05_predicted_magnitude_percentiles.png")
@@ -155,7 +155,7 @@ g6 <- ggplot(mag_df, aes(x = sigma_t)) +
   geom_text(data = pct_df, aes(x = x, y = Inf, label = percentile),
             angle = 90, vjust = 1.3, hjust = 1.1, size = 3, color = "firebrick") +
   labs(title = "Distribution empirique de \u03c3(t)",
-       subtitle = "Pour contexte : 0.25 (exemple \u00abcalme\u00bb du document) est proche du minimum historique",
+       subtitle = str_wrap("Pour contexte : 0.25 (exemple \u00abcalme\u00bb du document) est proche du minimum historique", width = 65),
        x = "\u03c3(t)", y = "Fréquence")
 
 save_fig(g6, "06_distribution_sigma_percentiles.png")

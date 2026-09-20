@@ -23,7 +23,7 @@ library(here)
 
 # ---- 0. Chemins ---------------------------------------------------------
 processed_dir <- here("data", "processed")
-output_dir    <- here("graphs", "Regresion_baseline_plot")
+output_dir    <- here("graphs", "Regresion_baseline")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 theme_set(
@@ -56,7 +56,7 @@ g1 <- ggplot(reg_df, aes(x = delta_y_t, y = r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "steelblue4") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "r(t+1) vs. \u0394y(t) — choc de volatilité GARCH",
-       subtitle = "R\u00b2 \u2248 0.0005 — aucune relation visible, cohérent avec le résultat nul",
+       subtitle = str_wrap("R\u00b2 \u2248 0.0005 — aucune relation visible, cohérent avec le résultat nul", width = 65),
        x = "\u0394y(t) = ln(\u03c3(t)/\u03c3(t-1))", y = "r(t+1) — rendement log (%)")
 
 save_fig(g1, "01_scatter_rt1_vs_deltay.png")
@@ -68,7 +68,7 @@ g2 <- ggplot(reg_df, aes(x = r_t, y = r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "darkorange3") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "r(t+1) vs. r(t) — momentum / mean-reversion à 1 jour",
-       subtitle = "\u03b2\u2082 \u2248 0.0206, p = 0.218 — aucun effet détecté",
+       subtitle = str_wrap("\u03b2\u2082 \u2248 0.0206, p = 0.218 — aucun effet détecté", width = 65),
        x = "r(t) — rendement log (%)", y = "r(t+1) — rendement log (%)")
 
 save_fig(g2, "02_scatter_rt1_vs_rt.png")
@@ -90,7 +90,7 @@ g3 <- ggplot(coef_df, aes(x = coef, y = variable)) +
                 color = "steelblue4", linewidth = 0.8) +
   geom_point(size = 3, color = "firebrick") +
   labs(title = "Coefficients de la régression baseline — IC 95% (erreurs HAC)",
-       subtitle = "Les deux intervalles traversent zéro — aucun effet statistiquement détecté",
+       subtitle = str_wrap("Les deux intervalles traversent zéro — aucun effet statistiquement détecté", width = 65),
        x = "Estimation du coefficient", y = NULL)
 
 save_fig(g3, "03_forest_plot_coefficients.png")
@@ -118,7 +118,7 @@ g4 <- ggplot(pred_df, aes(x = delta_y_t, y = r_pred)) +
   geom_text(data = pct_df, aes(x = x, y = max(pred_df$r_pred), label = percentile),
             angle = 90, vjust = -0.5, hjust = 1, size = 3, color = "grey30") +
   labs(title = "Effet prédit de \u0394y(t) sur r(t+1) — à coefficient pris au sérieux",
-       subtitle = "P95 et P99 marquent les niveaux réellement observés, pas des valeurs \u00abtypiques\u00bb (voir note de script)",
+       subtitle = str_wrap("P95 et P99 marquent les niveaux réellement observés, pas des valeurs \u00abtypiques\u00bb (voir note de script)", width = 65),
        x = "\u0394y(t)", y = "r(t+1) prédit (%)")
 
 save_fig(g4, "04_predicted_effect_with_percentiles.png")
@@ -132,7 +132,7 @@ g5 <- ggplot(reg_df, aes(x = delta_y_t)) +
   geom_text(data = pct_df, aes(x = x, y = Inf, label = percentile),
             angle = 90, vjust = 1.3, hjust = 1.1, size = 3, color = "firebrick") +
   labs(title = "Distribution empirique de \u0394y(t)",
-       subtitle = "94.6% des observations sont déjà sous ±0.05 en valeur absolue",
+       subtitle = str_wrap("94.6% des observations sont déjà sous ±0.05 en valeur absolue", width = 65),
        x = "\u0394y(t)", y = "Fréquence")
 
 save_fig(g5, "05_distribution_deltay_percentiles.png")

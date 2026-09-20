@@ -46,9 +46,9 @@ regime_levels <- c("low volatility", "normal volatility", "high volatility (stre
 
 # ---- 1. Chargement des données -------------------------------------------
 hmm_df <- read_csv(file.path(processed_dir, "regime_hmm_output.csv"),
-                    col_types = cols(Date = col_date(), sigma_t = col_double(),
-                                      log_sigma_t = col_double(), state = col_integer(),
-                                      regime_label = col_character())) %>%
+                   col_types = cols(Date = col_date(), sigma_t = col_double(),
+                                    log_sigma_t = col_double(), state = col_integer(),
+                                    regime_label = col_character())) %>%
   mutate(regime_label = factor(regime_label, levels = regime_levels))
 
 # ==============================================================================
@@ -78,7 +78,7 @@ g2 <- ggplot(convergence_df, aes(x = factor(restart), y = loglik)) +
   annotate("text", x = 8.5, y = 2900, label = "Optimum global\n(8/10 restarts)",
            color = "firebrick", size = 3.3) +
   labs(title = "Convergence du HMM sur 10 initialisations aléatoires",
-       subtitle = "8/10 restarts convergent vers l'optimum global (log-vraisemblance = 3302.55)",
+       subtitle = str_wrap("8/10 restarts convergent vers l'optimum global (log-vraisemblance = 3302.55)", width = 65),
        x = "Restart (random_state)", y = "Log-vraisemblance")
 
 save_fig(g2, "02_hmm_convergence_restarts.png")
@@ -90,7 +90,7 @@ g3 <- ggplot(hmm_df, aes(x = log_sigma_t, fill = regime_label)) +
   geom_density(alpha = 0.55, color = NA) +
   scale_fill_manual(values = regime_colors) +
   labs(title = "Distribution de log(\u03c3(t)) par régime",
-       subtitle = "Trois états bien séparés — contraste avec la première tentative dégénérée (section 3)",
+       subtitle = str_wrap("Trois états bien séparés — contraste avec la première tentative dégénérée (section 3)", width = 65),
        x = "log(\u03c3(t))", y = "Densité", fill = "Régime")
 
 save_fig(g3, "03_density_logsigma_by_regime.png")
@@ -107,7 +107,7 @@ g4 <- ggplot(freq_df, aes(x = regime_label, y = pct, fill = regime_label)) +
   geom_text(aes(label = paste0(round(pct, 1), "%")), vjust = -0.5, size = 3.8) +
   scale_fill_manual(values = regime_colors) +
   labs(title = "Fréquence de chaque régime (2010-2026)",
-       subtitle = "Le marché passe environ 1 jour sur 3 en régime de stress",
+       subtitle = str_wrap("Le marché passe environ 1 jour sur 3 en régime de stress", width = 65),
        x = NULL, y = "% des jours de trading") +
   theme(legend.position = "none")
 
@@ -136,7 +136,7 @@ g5 <- ggplot(trans_df, aes(x = from, y = to, fill = prob)) +
   geom_text(aes(label = scales::percent(prob, accuracy = 0.1)), size = 4) +
   scale_fill_gradient(low = "white", high = "steelblue4", labels = scales::percent) +
   labs(title = "Matrice de transition entre régimes",
-       subtitle = "Diagonale dominante — forte persistance intra-régime",
+       subtitle = str_wrap("Diagonale dominante — forte persistance intra-régime", width = 65),
        x = "Régime au jour t", y = "Régime au jour t+1", fill = "Probabilité")
 
 save_fig(g5, "05_transition_matrix_heatmap.png")
@@ -154,7 +154,7 @@ g6 <- ggplot(duration_df, aes(x = regime_label, y = duree_jours, fill = regime_l
   geom_text(aes(label = paste0("~", duree_jours, " j")), vjust = -0.5, size = 3.8) +
   scale_fill_manual(values = regime_colors) +
   labs(title = "Durée moyenne implicite d'un régime",
-       subtitle = "1 / (1 - p_reste) — un régime dure plusieurs mois, pas quelques jours",
+       subtitle = str_wrap("1 / (1 - p_reste) — un régime dure plusieurs mois, pas quelques jours", width = 65),
        x = NULL, y = "Durée moyenne (jours de trading)") +
   theme(legend.position = "none")
 
@@ -171,7 +171,7 @@ g7 <- ggplot(recent_df, aes(x = Date, y = sigma_t, color = regime_label)) +
   geom_point(size = 1.3) +
   scale_color_manual(values = regime_colors) +
   labs(title = "\u03c3(t) — 12 derniers mois de l'échantillon",
-       subtitle = "Les 10 derniers jours sont classés en régime de faible volatilité",
+       subtitle = str_wrap("Les 10 derniers jours sont classés en régime de faible volatilité", width = 65),
        x = NULL, y = "\u03c3(t)", color = "Régime")
 
 save_fig(g7, "07_recent_period_zoom.png", width = 8, height = 4.5)

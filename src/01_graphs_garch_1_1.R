@@ -40,7 +40,7 @@ library(here)
 
 raw_dir       <- here("data", "raw")
 processed_dir <- here("data", "processed")
-output_dir    <- here("graphs", "GARCH_1_1_plot")
+output_dir    <- here("graphs", "GARCH_1_1")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 theme_set(
@@ -58,14 +58,14 @@ save_fig <- function(plot, filename, width = 7, height = 4.5) {
 
 # ---- 1. Chargement des données -------------------------------------------
 daily  <- read_csv(file.path(raw_dir, "eurusd_daily.csv"),
-                    col_types = cols(Date = col_date(), Close = col_double()))
+                   col_types = cols(Date = col_date(), Close = col_double()))
 
 returns <- read_csv(file.path(processed_dir, "eurusd_log_returns.csv"),
-                     col_types = cols(Date = col_date(), log_return = col_double()))
+                    col_types = cols(Date = col_date(), log_return = col_double()))
 
 shocks <- read_csv(file.path(processed_dir, "eurusd_garch_shocks.csv"),
-                    col_types = cols(Date = col_date(), conditional_volatility = col_double(),
-                                      residual = col_double(), standardized_residual = col_double()))
+                   col_types = cols(Date = col_date(), conditional_volatility = col_double(),
+                                    residual = col_double(), standardized_residual = col_double()))
 
 # ---- 2. Reconstruction du modèle Normal (paramètres §4 de GARCH_1_1.md) --
 garch11_recursion <- function(r, mu, omega, alpha, beta) {
@@ -116,11 +116,11 @@ sd_emp  <- sd(returns$log_return)
 
 g2 <- ggplot(returns, aes(x = log_return)) +
   geom_histogram(aes(y = after_stat(density)), bins = 100,
-                  fill = "steelblue3", alpha = 0.6, color = "white", linewidth = 0.1) +
+                 fill = "steelblue3", alpha = 0.6, color = "white", linewidth = 0.1) +
   stat_function(fun = dnorm, args = list(mean = mu_emp, sd = sd_emp),
                 color = "firebrick", linewidth = 0.9) +
   labs(title = "Distribution des rendements log vs. Normale ajustée",
-       subtitle = "Écart visible dans les queues — quantifié formellement en §5.2",
+       subtitle = str_wrap("Écart visible dans les queues — quantifié formellement en §5.2", width = 65),
        x = "Rendement log (%)", y = "Densité")
 
 save_fig(g2, "02_returns_histogram_vs_normal.png")
@@ -160,7 +160,7 @@ g5 <- ggplot(compare_df, aes(sample = z_normal)) +
   stat_qq(color = "steelblue4", alpha = 0.5, size = 0.8) +
   stat_qq_line(color = "firebrick", linewidth = 0.8) +
   labs(title = "QQ-plot — résidus standardisés (modèle Normal) vs Normale",
-       subtitle = "Déviation nette dans les queues — motive le passage au Student-t",
+       subtitle = str_wrap("Déviation nette dans les queues — motive le passage au Student-t", width = 65),
        x = "Quantiles théoriques (Normale)", y = "Quantiles empiriques")
 
 save_fig(g5, "05_qqplot_normal_model.png")
@@ -177,7 +177,7 @@ g6 <- ggplot(shocks, aes(sample = standardized_residual)) +
   stat_qq_line(distribution = qstd_t, dparams = list(nu = nu),
                color = "firebrick", linewidth = 0.8) +
   labs(title = "QQ-plot — résidus standardisés vs Student-t (\u03bd \u2248 7.04)",
-       subtitle = "Bon ajustement — confirme le choix du modèle retenu",
+       subtitle = str_wrap("Bon ajustement — confirme le choix du modèle retenu", width = 65),
        x = "Quantiles théoriques (Student-t standardisée)", y = "Quantiles empiriques")
 
 save_fig(g6, "06_qqplot_studentt_model.png")
@@ -197,7 +197,7 @@ g7 <- ggplot(model_comparison, aes(x = metrique, y = valeur, fill = modele)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
   scale_fill_manual(values = c("Normal" = "grey50", "Student-t" = "firebrick")) +
   labs(title = "Comparaison des critères d'information — Normal vs Student-t",
-       subtitle = "Plus bas = meilleur ajustement, sur les trois critères",
+       subtitle = str_wrap("Plus bas = meilleur ajustement, sur les trois critères", width = 65),
        x = NULL, y = "Valeur", fill = "Modèle")
 
 save_fig(g7, "07_model_comparison_aic_bic.png")
@@ -216,9 +216,9 @@ kurtosis_df <- tibble(
 g8 <- ggplot(kurtosis_df, aes(x = modele, y = valeur, fill = type)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
   scale_fill_manual(values = c("Empirique" = "steelblue3",
-                                "Théorique (implicite au modèle)" = "grey50")) +
+                               "Théorique (implicite au modèle)" = "grey50")) +
   labs(title = "Kurtosis excédentaire — empirique vs théorique",
-       subtitle = "Student-t : l'empirique (1.831) est proche du théorique (1.973) -> bon ajustement",
+       subtitle = str_wrap("Student-t : l'empirique (1.831) est proche du théorique (1.973) -> bon ajustement", width = 65),
        x = NULL, y = "Kurtosis excédentaire", fill = NULL)
 
 save_fig(g8, "08_kurtosis_comparison.png")
@@ -239,7 +239,7 @@ g9 <- ggplot(tail_prob_df, aes(x = modele, y = probabilite, fill = modele)) +
   scale_y_log10(labels = scales::scientific) +
   scale_fill_manual(values = c("Normal" = "grey50", "Student-t" = "firebrick")) +
   labs(title = "Probabilité d'un mouvement de -2.67% (échelle log)",
-       subtitle = "Normal : ~1 fois tous les 2.3M ans  |  Student-t : ~1 fois tous les 14 ans",
+       subtitle = str_wrap("Normal : ~1 fois tous les 2.3M ans  |  Student-t : ~1 fois tous les 14 ans", width = 65),
        x = NULL, y = "Probabilité (échelle log10)") +
   theme(legend.position = "none")
 

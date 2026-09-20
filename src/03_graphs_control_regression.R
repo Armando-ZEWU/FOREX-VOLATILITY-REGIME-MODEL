@@ -19,7 +19,7 @@ library(here)
 
 # ---- 0. Chemins ---------------------------------------------------------
 processed_dir <- here("data", "processed")
-output_dir    <- here("graphs", "Control_regression_plot")
+output_dir    <- here("graphs", "Control_regression")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 theme_set(
@@ -37,9 +37,9 @@ save_fig <- function(plot, filename, width = 7, height = 4.5) {
 
 # ---- 1. Chargement des données -------------------------------------------
 ext_df <- read_csv(file.path(processed_dir, "regression_dataset_extended.csv"),
-                    col_types = cols(Date = col_date(), r_t = col_double(),
-                                      delta_y_t = col_double(), r_t_plus_1 = col_double(),
-                                      diff_rate = col_double(), r_dxy = col_double()))
+                   col_types = cols(Date = col_date(), r_t = col_double(),
+                                    delta_y_t = col_double(), r_t_plus_1 = col_double(),
+                                    diff_rate = col_double(), r_dxy = col_double()))
 
 # ==============================================================================
 # GRAPH 1 — Stabilité de beta_1 (delta_y_t) avant/après contrôles
@@ -47,7 +47,7 @@ ext_df <- read_csv(file.path(processed_dir, "regression_dataset_extended.csv"),
 # ==============================================================================
 beta1_df <- tibble(
   etape = factor(c("Avant contrôles", "Après contrôles"),
-                  levels = c("Avant contrôles", "Après contrôles")),
+                 levels = c("Avant contrôles", "Après contrôles")),
   coef = c(-0.1329, -0.1308),
   se   = c(0.238793, 0.239006),
   p    = c(0.578, 0.584)
@@ -61,7 +61,7 @@ g1 <- ggplot(beta1_df, aes(x = etape, y = coef)) +
   geom_text(aes(label = paste0("\u03b2\u2081 = ", coef, "\n(p = ", p, ")")),
             vjust = -1.2, size = 3.3) +
   labs(title = "Stabilité de \u03b2\u2081 (\u0394y(t)) avant/après ajout des contrôles",
-       subtitle = "Variation \u2248 1.6% en magnitude — aucune preuve de confusion",
+       subtitle = str_wrap("Variation \u2248 1.6% en magnitude — aucune preuve de confusion", width = 65),
        x = NULL, y = "Coefficient \u03b2\u2081")
 
 save_fig(g1, "01_beta1_stability.png")
@@ -81,7 +81,7 @@ g2 <- ggplot(fit_comparison, aes(x = metrique, y = valeur, fill = modele)) +
   coord_cartesian(ylim = c(6300, 6400)) +
   scale_fill_manual(values = c("Baseline (réestimée)" = "grey50", "Étendu (+ contrôles)" = "firebrick")) +
   labs(title = "AIC / BIC — l'ajout des contrôles dégrade l'ajustement",
-       subtitle = "Les deux critères favorisent le modèle baseline, sans les contrôles",
+       subtitle = str_wrap("Les deux critères favorisent le modèle baseline, sans les contrôles", width = 65),
        x = NULL, y = "Valeur (zoom sur la plage pertinente)", fill = "Modèle")
 
 save_fig(g2, "02_aic_bic_comparison.png")
@@ -104,7 +104,7 @@ g3 <- ggplot(coef_compact, aes(x = coef, y = variable)) +
                 color = "steelblue4", linewidth = 0.8) +
   geom_point(size = 3, color = "firebrick") +
   labs(title = "Modèle étendu — coefficients à échelle compacte",
-       subtitle = "r_dxy exclu ici (IC bien plus large — voir graph séparé)",
+       subtitle = str_wrap("r_dxy exclu ici (IC bien plus large — voir graph séparé)", width = 65),
        x = "Estimation du coefficient", y = NULL)
 
 save_fig(g3, "03_forest_plot_compact.png")
@@ -130,7 +130,7 @@ g4 <- ggplot(r_dxy_df, aes(x = coef, y = variable)) +
            size = 3.3, color = "grey30") +
   coord_cartesian(ylim = c(0.7, 1.5)) +
   labs(title = "r_dxy — un coefficient statistiquement non-informatif",
-       subtitle = "Pas juste \u00abnon significatif\u00bb : l'estimation ne permet même pas de fixer le signe",
+       subtitle = str_wrap("Pas juste \u00abnon significatif\u00bb : l'estimation ne permet même pas de fixer le signe", width = 65),
        x = "Estimation du coefficient", y = NULL)
 
 save_fig(g4, "04_r_dxy_wide_ci.png")
@@ -142,7 +142,7 @@ g5 <- ggplot(ext_df, aes(x = diff_rate, y = r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "steelblue4") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "r(t+1) vs. différentiel de taux (Fed - BCE)",
-       subtitle = "\u03b2\u2083 \u2248 0.0100, p = 0.257 — aucune relation détectée",
+       subtitle = str_wrap("\u03b2\u2083 \u2248 0.0100, p = 0.257 — aucune relation détectée", width = 65),
        x = "diff_rate(t) — points de pourcentage", y = "r(t+1) — rendement log (%)")
 
 save_fig(g5, "05_scatter_rt1_vs_diffrate.png")
@@ -154,7 +154,7 @@ g6 <- ggplot(ext_df, aes(x = r_dxy, y = r_t_plus_1)) +
   geom_point(alpha = 0.25, size = 0.8, color = "darkorange3") +
   geom_smooth(method = "lm", color = "firebrick", se = TRUE, linewidth = 0.9) +
   labs(title = "r(t+1) vs. rendement du proxy DXY",
-       subtitle = "\u03b2\u2084 \u2248 0.859, p = 0.865 — estimation non-informative (voir graph 4)",
+       subtitle = str_wrap("\u03b2\u2084 \u2248 0.859, p = 0.865 — estimation non-informative (voir graph 4)", width = 65),
        x = "r_dxy(t)", y = "r(t+1) — rendement log (%)")
 
 save_fig(g6, "06_scatter_rt1_vs_rdxy.png")

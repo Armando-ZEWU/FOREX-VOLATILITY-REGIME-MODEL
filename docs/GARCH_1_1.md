@@ -38,12 +38,22 @@ New loader (`data_loader_fred.py`) pulls the `DEXUSEU` series directly from
 FRED's CSV endpoint. Result: 4,176 daily observations retrieved
 successfully (2010-01-01 to 2026-09-11).
 
+**Note on what this series actually measures**: `DEXUSEU` is the Federal
+Reserve's H.10 release **noon buying rate in New York City for cable
+transfers** — not a market close, despite being referred to loosely as
+"Close" in the data pipeline's column naming (`data_loader_fred.py`,
+`features.py`) for compatibility with the rest of the code. This
+distinction matters later when comparing forecasts to independently
+sourced end-of-day OHLC data (see `price_range.md` and
+`covid_robustness_test.md`), where the mismatch in reference time (noon
+vs. close) is a real source of discrepancy, not just cross-provider noise.
+
 ### 2.3 Price convention check
 
 **Issue identified**: FRED's `DEXUSEU` is quoted as USD per EUR (e.g. 1.16
 = 1 EUR buys 1.16 USD). This is the **opposite** convention from the
 illustrative example used earlier in the project ("1$ s'échange contre
-1.1€"), which implicitly quoted USD per EUR... no — quoted EUR per USD.
+1.1€"), which implicitly quoted EUR per USD.
 
 **Decision**: keep FRED's native convention (USD per EUR), since it matches
 the standard market convention for "EUR/USD" (EUR as base currency, USD as
@@ -289,8 +299,9 @@ estimate of how much EUR/USD might move on a given day.
   `methodology.md`) are run.
 - ω is not statistically significant under the Student's t specification —
   flagged, not yet resolved.
-- This entire specification uses daily closing data only (no intraday
-  realized volatility) — same data-access limitation already documented in
+- This entire specification uses daily noon-rate data only (`DEXUSEU` is
+  the Federal Reserve's H.10 noon buying rate in New York, not a market
+  close — see section 2.2) with no intraday realized volatility — same data-access limitation already documented in
   `methodology.md` section 6.
 
 ## 11. Files produced at this stage

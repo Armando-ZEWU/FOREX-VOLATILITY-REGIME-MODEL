@@ -84,7 +84,11 @@ g1 <- ggplot(fan_df2, aes(x = 1)) +
             alpha = 0.6) +
   geom_point(data = actual_pts, aes(x = 1, y = actual_price, color = breach), size = 3.5, inherit.aes = FALSE) +
   facet_wrap(~panel, nrow = 1) +
-  scale_fill_brewer(palette = "Blues", direction = -1, labels = scales::percent) +
+  scale_fill_brewer(
+    palette = "Blues",
+    direction = -1,
+    labels = \(x) scales::percent(as.numeric(as.character(x)))
+  ) +
   scale_color_manual(values = c("Dans la plage (95%)" = "grey20", "Hors plage (95%)" = "firebrick")) +
   scale_x_continuous(breaks = NULL) +
   labs(title = "Test séquentiel à 1 jour — bandes de confiance et prix réel",

@@ -1,4 +1,4 @@
-﻿# Full Expanding-Window Backtest (2013-2026)
+# Full Expanding-Window Backtest (2013-2026)
 
 *Companion document to `covid_robustness_test.md` and `rolling_test.md`.
 This is the project's first test with genuine statistical power — 3,424
@@ -120,14 +120,48 @@ detail.
 
 ## 4. A recurring structural finding: ν₂ is persistently hard to identify
 
-The "stress regime tail parameter poorly identified" warning
-(SE(ν₂) > ν₂) fired in **10 of 14 folds** — not an isolated quirk of the
-pre-2020 window (`ms_garch_pre2020.R`) but a **recurring property of this
-model applied to this data**, regardless of which years are in the
-training window. Practical reading: reliably pinning down how heavy the
-stress regime's tail truly is remains difficult almost everywhere in this
-sample — a limitation of the specification/data combination, not of any
-single fold's bad luck.
+The "stress regime tail parameter poorly identified" warning (SE(ν₂) >
+ν₂, i.e. a t-like ratio ν₂/SE(ν₂) below 1) fired in **10 of 14 folds**
+(corrected from an earlier draft of this document, which mis-stated 11 —
+caught and fixed on review, not left uncorrected). Folds 1, 3, 6, and 14
+did not trigger it.
+
+### 4.1 Why these four folds specifically? Investigated, not assumed
+
+Before writing anything about a pattern, three candidate explanatory
+variables were checked against the ν₂/SE(ν₂) ratio across all 14 folds:
+training sample size, regime 2's own GARCH persistence (α+β₂), and ν₂'s
+point estimate itself.
+
+**A first pass showed a strong correlation with regime-2 persistence
+(r = -0.95)** — but this was checked further rather than reported as-is,
+and turned out to be **driven entirely by fold 6's extreme outlier
+status** (section 5's α+β₂ = 0.436, far outside every other fold's
+0.93-0.999 range). Removing fold 6 alone collapses the correlation to
+r = +0.22 (weak, and the sign flips) — confirming this apparent pattern
+was a single-point artifact, not a real relationship. Sample size showed
+essentially no correlation either (r = -0.20).
+
+**The more accurate — and more sobering — reframing**: since ν₂/SE(ν₂)
+is mathematically a t-statistic for testing ν₂ = 0, computing approximate
+p-values for all 14 folds shows that **only 2 of 14 (folds 3 and 6) reach
+conventional statistical significance (p < 0.05)**. The two folds that
+"passed" the script's warning threshold besides these (folds 1 and 14)
+are not actually statistically well-identified either (p ≈ 0.16 and
+p ≈ 0.19) — they merely cleared the script's own threshold (ratio > 1,
+equivalent to a weak p ≈ 0.32 bar), which is itself not a meaningful
+cutoff for genuine statistical confidence.
+
+**Honest conclusion**: ν₂ is essentially unidentifiable across nearly the
+entire 14-fold sample, not merely "hard to identify in most folds while
+fine in a few." No single explanatory variable among those checked
+accounts for which folds land marginally above or below the (arbitrary)
+warning threshold — this is best read as noise around a weak boundary,
+not a structural distinction between "good" and "bad" folds. The
+practical reading from section 2 stands regardless: the model's *average*
+one-step coverage is excellent despite this — but confidence in exactly
+how it prices the most extreme stress-regime tail outcomes should remain
+low throughout the sample, not just in a minority of folds.
 
 ## 5. Fold 6 (2018) anomaly — resolved once the transition matrix was logged
 
@@ -289,4 +323,3 @@ attached to them is being treated with more caution here.
   SNB shock, the 2016 Brexit vote, the 2020 COVID trough, the 2022 parity
   crossing) remains a possible, much cheaper partial alternative, not yet
   done.
-

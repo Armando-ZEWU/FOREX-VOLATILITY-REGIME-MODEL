@@ -1,0 +1,4812 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ─────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[numbers]{natbib}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{abstract}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tcolorbox}
+\usepackage{mdframed}
+\usepackage{times}
+\usepackage{iftex}
+\usepackage{fontspec}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+
+\newtcolorbox{keyeq}{
+	enhanced, breakable,
+	colback=white, colframe=fxgray,
+	boxrule=0.6pt, arc=2pt,
+	left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+% ── Path to figures ───────────────────────────────────────────
+% Extract Graphs.rar into a subfolder "graphs/" placed next to
+% this .tex file before compiling.
+\graphicspath{{graphs/}}
+
+% ── Geometry ────────────────────────────────────────────────────
+\geometry{
+	a4paper,
+	top=2.5cm, bottom=2.5cm,
+	left=3cm, right=3cm
+}
+
+% ── Colors ─────────────────────────────────────────────────────
+\definecolor{fxnavy}{RGB}{0,51,102}
+\definecolor{fxgray}{RGB}{90,90,90}
+\definecolor{fxlight}{RGB}{230,240,255}
+\definecolor{warnyellow}{RGB}{255,200,0}
+\definecolor{okgreen}{RGB}{0,128,64}
+
+% ── Cover page colors ───────────────────────────────
+\definecolor{docblue}{RGB}{22,74,140}
+\definecolor{doclight1}{RGB}{213,227,245}
+\definecolor{doclight2}{RGB}{231,240,251}
+\definecolor{docgrey}{RGB}{90,90,90}
+\usepackage[colorlinks = true, urlcolor = black, linkcolor = red]{hyperref}
+%\usepackage{tikz} % For the frame
+%\usetikzlibrary{calc}
+
+% ── Hyperlinks ───────────────────────────────────────────────────
+\hypersetup{
+	colorlinks=true,
+	linkcolor=fxnavy,
+	citecolor=fxnavy,
+	urlcolor=fxnavy,
+	pdftitle={FOREX Volatility Regime Model},
+	pdfauthor={Armand ZEWU}
+}
+
+% ── Header / Footer ───────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{fxgray}{FOREX Volatility Regime Model}}
+\fancyhead[R]{\small\textcolor{fxgray}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Spacing ───────────────────────────────────────────────────
+\onehalfspacing
+
+% ── Boxes ─────────────────────────────────────────────────────
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{fxbox}[1][]{
+	enhanced, breakable,
+	colback=fxlight, colframe=fxnavy,
+	fonttitle=\bfseries\color{fxnavy},
+	title={#1}, arc=3pt
+}
+\newtcolorbox{limitbox}{
+	enhanced, breakable,
+	colback=yellow!10, colframe=orange!70!black,
+	fonttitle=\bfseries, title={Documented limitation},
+	arc=3pt
+}
+\newtcolorbox{corrbox}[1][Error identified and corrected]{
+	enhanced, breakable,
+	colback=red!5, colframe=red!60!black,
+	fonttitle=\bfseries, title={#1},
+	arc=3pt
+}
+
+\newtcolorbox{econbox}[1][Economic interpretation]{
+	enhanced, breakable,
+	colback=okgreen!8, colframe=okgreen,
+	fonttitle=\bfseries, title={#1},
+	arc=3pt
+}
+
+
+
+% ── Notation ─────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+
+\setlength{\headheight}{13.59999pt}
+
+% ---- Title page content ("SKDE-notat" style) ----
+\newcommand{\titrerapport}{Quantitative modeling \\of EUR/USD exchange rate volatility}
+%\newcommand{\soustitrerapport}{Quantitative modeling \\of EUR/USD exchange rate volatility}}
+\newcommand{\resumerapport}{A quantitative model exploring the Forex market (EUR/USD),			capable of measuring an indicator \\of \guillemotleft~fear~\guillemotright\ /			volatility that explains returns and detects regimes	(low / normal / high).}
+
+% ═════════════════════════════════════════════════════════════════
+\begin{document} 
+% ═════════════════════════════════════════════════════════════════
+
+% ── Cover page (integrated FX-Cover code, A4 scale 21x29.7) ──
+\newgeometry{margin=0cm}
+\pagestyle{empty}
+\thispagestyle{empty}
+\noindent
+
+
+\begin{titlepage}
+	
+	
+	\begin{tikzpicture}[remember picture, overlay]
+		
+		%\IfFontExistsTF{Montserrat}{\fontspec{Montserrat}}{}
+		
+		% ---- Decorative background ----
+		\fill[doclight1] ($(current page.north east)+(-3.0,1.4)$) circle (5.8cm);
+		\fill[doclight2] ($(current page.south west)+(3.4,-2.0)$) circle (6.4cm);
+		\fill[doclight1] ($(current page.south east)+(-0.6,2.6)$) circle (3.6cm);
+		
+		% ---- Title ----
+		\node[anchor=north west, text width=15cm, align=left,
+		text=docblue, font=\fontsize{27}{32}\selectfont\bfseries]
+		at ($(current page.north west)+(2.2,-4.3)$) {\titrerapport};
+		
+		% ---- Subtitle ----
+		%	\node[anchor=north west, text width=15cm, align=left,
+		%	text=black, font=\Large]
+		%	at ($(current page.north west)+(2.2,-8.9)$) {\soustitrerapport};
+		
+		% ---- Abstract ----
+		\node[anchor=north west, text width=10cm, align=justify,
+		font=\normalsize] (resume)
+		at ($(current page.north west)+(2.2,-10.0)$) {\resumerapport};
+		
+		% ---- Rule + note under the abstract ----
+		\draw[docgrey, line width=0.4pt]
+		($(resume.south west)+(0,-0.35)$) -- ($(resume.south east)+(0,-0.35)$);
+		\node[anchor=north east, font=\small]
+		at ($(resume.south east)+(0,-0.55)$) {Quantitative research report --- 2026};
+		
+		% ---- Author block (vertical rule on the left) ----
+		\draw[docblue, line width=1pt]
+		($(current page.south east)+(-8.6,4.9)$) -- ($(current page.south east)+(-8.6,7.4)$);
+		\node[anchor=north west, text width=7cm, align=left, font=\normalsize]
+		at ($(current page.south east)+(-8.3,7.4)$)
+		{ZEWU Yawo Armand Isaac\\
+			\textit{Undergraduate Student in International Economics}\\
+		};
+		
+		% ---- Footer: logo / institution ----
+		%\foreach \x/\y/\c in {0/0.13/docblue, 0.32/0.13/docblue!55,
+			%	0/-0.15/docblue!55, 0.32/-0.15/docblue!25}{
+			%	\fill[\c] ($(current page.south west)+(2.2+\x,1.95+\y)$) circle (0.045);
+			%}
+		
+		\node[anchor=west, text=docblue, font=\bfseries\normalsize]
+		at ($(current page.south west)+(2.2,1.95)$) {Faculty of Economics and Management Sciences --- University of Lomé};
+		\node[anchor=north west, text=docblue, font=\small]
+		at ($(current page.south west)+(2.2,1.55)$)
+		{Department of Economics};
+		
+	\end{tikzpicture}
+	
+\end{titlepage}	
+
+\clearpage
+\restoregeometry
+\pagestyle{fancy}
+
+% ── Abstract ──────────────────────────────────────────────────────
+\begin{titlepage}
+	\begin{center}
+		
+		\begin{mdframed}[backgroundcolor=fxlight,linecolor=fxnavy,
+			linewidth=1pt,innerleftmargin=12pt,
+			innerrightmargin=12pt,innertopmargin=10pt,
+			innerbottommargin=10pt]
+			\textbf{Abstract.}
+			This document brings together the entirety of a quantitative
+			modeling project on EUR/USD exchange rate volatility, conducted in
+			two stages: (a) measuring, in a statistically testable way, a
+			shift in market volatility, rather than describing it
+			qualitatively; (b) deriving an operational use from it --- a
+			price range adjusted to the market regime and real-time
+			regime detection. A GARCH(1,1) with Student's~$t$
+			innovations ($\hat\nu \approx 7{,}04$) is specified and validated on
+			daily log returns (FRED, \texttt{DEXUSEU}, 2010--2026, $n=4\,175$).
+			The model's temporal stability is tested over five equal
+			sub-periods: point estimates vary, but a
+			likelihood-ratio test does not reject the hypothesis of a
+			single set of parameters ($p=0{,}277$). A baseline regression
+			$r(t+1) = \alpha + \beta_1 \Delta Y(t) + \beta_2 r(t) + u(t)$
+			detects no predictive power on the \emph{direction} of the
+			return, a result robust to the addition of control variables
+			(rate differential, DXY proxy). By contrast, the level of
+			conditional volatility $\sigma(t)$ explains a
+			significant share of the \emph{magnitude} of the future return
+			($R^2 = 0{,}090$, $p<0{,}001$) --- a result of internal consistency
+			of the GARCH, not a new discovery. A three-state Gaussian HMM
+			and then a Markov-Switching GARCH ($K=2$, specification of
+			Haas, Mittnik \& Paolella, 2004a) yield persistent regime
+			detection (average durations of 72 to 404 days depending on the
+			regime and the model). The resulting operational price range
+			is validated by an expanding-window backtest of 3,424
+			one-day-ahead forecasts over 2013--2026: empirical coverage
+			of 95.50\% against a nominal target of 95\% (one-sided
+			binomial test, $p=0{,}919$) --- the project's first validation
+			with genuine statistical power. A dedicated out-of-sample
+			robustness test for the COVID-19 crisis (January--April 2020,
+			model re-estimated on strictly prior data) complements this
+			result without contradicting it. Each step is documented with its
+			errors, corrections, and acknowledged limitations, in the
+			interest of full methodological transparency.
+		\end{mdframed}
+		
+	\end{center}
+\end{titlepage}
+
+% ── Table of contents ───────────────────────────────────────────
+\tableofcontents
+\newpage
+
+\begin{center}
+	{\LARGE\bfseries Author's Note}
+\end{center}
+\vspace{0.8cm}
+
+I first encountered risk aversion in microeconomics --- a stable individual preference within the framework of utility theory. But financial markets generally do not behave this way, as if risk perception were constant: volatility rises sharply, investor sentiment shifts, and markets alternate between periods of calm and panic.
+
+This led me to ask a question that microeconomics alone cannot answer: \textit{\textbf{can this perception of risk, variable over time and at the scale of the market — which is closer to behavioral finance than to classical risk aversion — be measured quantitatively on the foreign exchange (FX) market, the most liquid market in the world? And, if so, can it help explain returns and produce a usable price range, rather than a purely qualitative analysis?}}
+
+This project is also an opportunity to apply the skills acquired in Econometrics and Decision Statistics studied during my Bachelor's degree in International Economics at the FASEG of the University of Lomé.
+It naturally connects with my courses in International Trade and International Monetary Economics, since financial markets sit at the intersection of these two fields.
+
+I want to stress that the primary aim of this modeling exercise was not to build a Forex trading tool, but the results obtained, particularly the results on the price range, can be used for an analytical strategy on these markets.
+
+\newpage
+% ═════════════════════════════════════════════════════════════════
+\section{Introduction}
+\label{sec:intro}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Project objective}
+
+This project builds a quantitative model for the foreign exchange market
+(EUR/USD as a case study), with a dual ambition:
+
+\begin{itemize}
+	\item[\textbf{(a)}] To measure, in a quantitative and statistically
+	testable way, a behavioral shift in the market
+	(fear~/~risk aversion), rather than describing it
+	qualitatively as part of the behavioral finance
+	literature does.
+	\item[\textbf{(b)}] To derive a potential operational use from it: a
+	decision-support signal --- not a certain prediction --- and
+	real-time market regime detection (low/normal/high volatility (stress-panic)).
+\end{itemize}
+
+
+
+
+
+\subsection{Theoretical starting point}
+
+\textbf{\textit{	The project's founding question is: does the future price $P(t+1)$ depend on the present price $P(t)$?}}
+
+\begin{itemize}
+	\item On a market as liquid as EUR/USD spot, the
+	\textbf{direction} of the price approximately follows a random
+	walk (weak-form efficient market hypothesis) --- nearly
+	unpredictable from price history alone.
+	\item By contrast, the \textbf{magnitude~/~volatility} of the
+	movement is partially predictable, via the volatility
+	\emph{clustering} phenomenon: a turbulent period tends to be
+	followed by a turbulent period.
+	\item Operational consequence: aim for a \textbf{price range} (a confidence interval based on volatility), not a fixed price.
+\end{itemize}
+
+These two results will be established empirically and separately in this document: the absence of directional predictability
+(section~\ref{sec:baseline}, confirmed in section~\ref{sec:controls}) and the predictability of magnitude (section~\ref{sec:magnitude}).
+
+\subsection{Model specification --- iterations}
+\label{sec:spec-iterations}
+
+
+The initial proposed equation was
+$P(t+1) = X(t) + Y(t) + u(t)$, 
+
+where:
+
+\begin{itemize}
+	\item $X$ is the price at time $t$,
+	\item	$Y$ a market fear sentiment index, 
+	\item and $u$ an error term. 
+\end{itemize}
+
+\newpage
+
+Three successive corrections were needed before arriving at an estimable specification:
+
+\begin{enumerate}
+	\item \textbf{Dimensional inconsistency.} It is impossible
+	to add a price and a fear index without a weighting
+	coefficient: the correct form requires a $\beta$,
+	$P(t+1) = P(t) + \beta \cdot Y(t) + u(t)$.
+	\item \textbf{Non-stationarity of the price level.} Exchange
+	rates are close to a unit-root process. Modeling the level exposes one to a spurious regression
+	\citep{grangernewbold1974}. The model therefore operates on the
+	\textbf{logarithmic return}, $r(t+1) = \ln\!\big(P(t+1)/P(t)\big)$.
+	\item \textbf{Simultaneity~/~causality.} A fear index computed from contemporaneous option prices could be a consequence of the price, not its cause. The explanatory variable must therefore be lagged in time, or its causality tested
+	explicitly.
+\end{enumerate}
+
+\vspace{0.8cm}
+
+The working specification adopted is:
+
+\begin{center}
+	\begin{keyeq}
+		\begin{equation}
+			r(t+1) = \alpha + \beta_1 \, \Delta Y(t) + \beta_2 \, r(t)
+			+ \sum_i \gamma_i \, \text{Control}_i(t) + u(t),
+			\label{eq:master-spec}
+		\end{equation}
+	\end{keyeq}
+\end{center}
+
+
+
+\vspace{0.4cm}
+
+where:
+
+\begin{itemize}
+	\item $\Delta Y(t)$ is the change in the fear~/~volatility variable. It is defined concretely in section~\ref{sec:garch}: it is the standardized residual of a GARCH(1,1) with Student's~$t$ innovations, calibrated on EUR/USD log returns (not its level), 
+	\item $r(t)$ captures any residual momentum or \emph{mean-reversion}, and the controls include the interest rate differential and a dollar proxy (DXY).
+\end{itemize} 
+
+
+\subsection{Choice of the fear~/~volatility variable}
+
+The usual reference indices were ruled out: the CVIX (Deutsche
+Bank) and the JPMorgan VXY Global are proprietary products beyond
+reach; the equity VIX (S\&P~500), considered as a proxy, was rejected because it captures a risk specific to U.S. equities,
+potentially disconnected from FX --- the VIX
+$\rightarrow$ FX transmission chain is indirect and unstable over time, and
+using it would break the coherence of the object of study (measuring a proxy from another market rather than FX itself).
+
+The solution adopted is an \textbf{internally constructed FX conditional
+	volatility}, via a GARCH(1,1) calibrated directly on EUR/USD log returns --- not a simple rolling standard-deviation window.
+General principle: an imperfect but well-targeted measure (the
+volatility of the right market) outperforms a sophisticated but poorly
+targeted measure (the volatility of another market).
+
+\subsection{Data sources}
+\label{sec:data-sources}
+
+\begin{table}[H]
+	\centering
+	\caption{Data sources used}
+	\label{tab:data-sources}
+	\begin{tabular}{lll}
+		\toprule
+		Series & Source & Role \\
+		\midrule
+		EUR/USD (\texttt{DEXUSEU}) & FRED & Price $P(t)$, return $r(t)$ \\
+		Fed Funds rate (\texttt{DFF}) & FRED & Control --- rate differential \\
+		ECB deposit rate (\texttt{ECBDFR}) & FRED & Control --- rate differential \\
+		Broad dollar index (\texttt{DTWEXBGS}) & FRED & Control --- DXY proxy \\
+		EUR/USD OHLC (external reference) & Pound Sterling Live & Independent verification \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.4cm}
+
+The choice of FRED as the primary source follows the failure of
+\texttt{yfinance} on the \texttt{EURUSD=X} ticker
+(section~\ref{sec:garch-data}). A convention point deserves to be
+fixed from the introduction: \texttt{DEXUSEU} is quoted in dollars per
+euro (standard EUR/USD market convention, the euro being the base currency) ---  
+A second clarification, reused several times in this document:
+\texttt{DEXUSEU} is the \emph{noon
+	buying rate} published by the Federal Reserve (H.10 release) in New
+York, not a market closing price --- a distinction that explains
+part of the discrepancies observed later (section~\ref{sec:covid}) between
+this project and independent OHLC sources.
+
+\subsection{Document roadmap}
+
+Table~\ref{tab:roadmap} summarizes the structure of the document and,
+implicitly, the logical order in which the questions were
+raised and closed over the course of the project.
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Roadmap}
+	\label{tab:roadmap}
+	\begin{tabular}{@{}p{0.9cm}p{6.3cm}p{7.2cm}@{}}
+		\toprule
+		\S{} & Step & Question asked \\
+		\midrule
+		\ref{sec:garch} & GARCH(1,1) & How to cleanly isolate a volatility shock
+		from mere inertia? \\
+		\ref{sec:garch-stability} & Temporal stability of the GARCH & Is the
+		single model a stable description, or an average that
+		masks regimes? \\
+		\ref{sec:baseline} & Baseline regression & Does $\Delta Y(t)$
+		predict the \emph{direction} of $r(t+1)$? \\
+		\ref{sec:controls} & Regression with controls & Does this null result
+		survive the addition of the rate differential and the DXY? \\
+		\ref{sec:magnitude} & Magnitude regression & Do $\Delta Y(t)$ or
+		$\sigma(t)$ predict the \emph{size} of $r(t+1)$? \\
+		\ref{sec:regime-hmm} & Regime detection (HMM) & Can days be
+		classified into volatility regimes, without re-estimating the
+		GARCH by regime? \\
+		\ref{sec:msgarch} & Markov-Switching GARCH & What changes when
+		$\omega,\alpha,\beta$ are re-estimated separately by regime? \\
+		\ref{sec:price-range} & Operational price range & What is
+		objective (b) of the project actually worth, concretely? \\
+		\ref{sec:rolling-test} & Rolling chain test & How does the
+		range behave day after day, under real
+		conditions? \\
+		\ref{sec:covid} & Out-of-sample robustness (COVID) & What
+		happens during a major shock, with a model that has
+		never seen it? \\
+		\ref{sec:backtest} & Full backtest (2013--2026) & Is the model
+		calibrated, with genuine statistical power? \\
+		\ref{sec:conclusion} & Conclusion & What does this project establish,
+		and what does it leave open? \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+%	\textbf{Note on the order chosen.} The section on the temporal
+%	stability of the GARCH (\ref{sec:garch-stability}) is placed
+%	immediately after the GARCH specification, even before the
+%	baseline regression: this is the logical order in which this
+%	question was raised --- \emph{before} the choice of a regime
+%	detection method (HMM vs Markov-Switching GARCH) --- even though,
+%	in the project's methodology log, its written confirmation came
+%	later. The placement of the figures follows exactly
+%	the arbitration already set in the dedicated working document
+%	(\emph{Graphs\_Ways.md}) and is not modified here.
+
+% ═════════════════════════════════════════════════════════════════
+\newpage
+\section{The GARCH(1,1) --- Specification and Validation}
+\label{sec:garch}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective}
+
+Specify and validate a GARCH(1,1) on the daily log returns
+of EUR/USD, in order to
+\begin{itemize}
+	\item (a) isolate the volatility shock from its mechanical
+	inertia (\emph{clustering}), 
+	\item (b) obtain a series of standardized
+	residuals usable as a "fear shock" input variable
+	for the regression on the return (section~\ref{sec:baseline})
+\end{itemize}
+.
+
+\subsection{Data pipeline}
+\label{sec:garch-data}
+
+
+
+The loader (\texttt{data\_loader\_fred.py}) retrieves the
+\texttt{DEXUSEU} series directly from FRED's CSV
+endpoint: \textbf{4,176 daily observations} successfully obtained (2010-01-01 to 2026-09-11).
+
+
+%\textbf{Zero-return check.} 39 of the 4,175 daily log
+%returns are exactly zero ($\approx 0{,}93\,\%$ of
+%observations). A dispersion test around known bank
+%holidays (which would suggest a stale value repeated by
+%FRED) shows no visible calendar pattern: the dates are
+%scattered. Conclusion: consistent with FRED's rounding to 4 decimals
+%on low-volatility days, not a data quality issue ---
+%the series is left intact.
+
+\subsection{Diagnostics of the return series (before GARCH)}
+
+Log returns (scaled $\times 100$), full sample,
+$n = 4\,175$:
+
+\begin{table}[H]
+	\centering
+	\caption{Descriptive statistics of EUR/USD log returns}
+	\begin{tabular}{lr}
+		\toprule
+		Statistic & Value \\
+		\midrule
+		Mean & $-0{,}0052\,\%$ \\
+		Standard deviation & $0{,}518\,\%$ \\
+		Minimum & $-2{,}672\,\%$ \\
+		Maximum & $3{,}064\,\%$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+A mean close to zero is consistent with weak-form market
+efficiency (no exploitable mean drift). The minimum and
+maximum, well beyond several standard deviations from the mean,
+provide an initial visual indication of fat tails,
+formally confirmed later (\S\ref{sec:garch-fattails}).
+
+\vspace{0.4cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{01_returns_series.png}
+	\caption{Daily log return series, EUR/USD, 2010--2026.}
+	\label{fig:returns-series}
+\end{figure}
+
+\newpage
+
+\subsection{GARCH(1,1) --- Normal distribution (first specification)}
+
+\begin{center}
+	\begin{keyeq}
+		
+		\begin{equation}
+			\sigma^2(t) = \omega + \alpha \, \varepsilon^2(t-1) + \beta \, \sigma^2(t-1)
+		\end{equation}
+	\end{keyeq}
+\end{center}
+
+
+\vspace{0.8cm}
+
+\begin{table}[H]
+	\centering
+	\caption{GARCH(1,1), Normal innovations}
+	\begin{tabular}{lrr}
+		\toprule
+		Parameter & Estimate & Significance \\
+		\midrule
+		$\mu$ & $-0{,}00588$ & $p=0{,}394$, not significant \\
+		$\omega$ & $0{,}001446$ & $p=0{,}031$ \\
+		$\alpha_1$ & $0{,}0350$ & $p \approx 1{,}6\times10^{-9}$ \\
+		$\beta_1$ & $0{,}9595$ & $p<0{,}001$ \\
+		\midrule
+		\multicolumn{3}{l} {Log-likelihood $=-2900{,}17$ ; AIC $=5808{,}34$ ; BIC $=5833{,}69$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+\begin{itemize}
+	\item $\mu$ not significant is consistent with the random-walk
+	hypothesis for the direction of returns. 
+	\item $\alpha+\beta = 0{,}9945 < 1$ (stationarity condition satisfied).
+	\item Implied shock half-life: $\ln(0{,}5)/\ln(0{,}9945) \approx 126$ trading days ($\approx$~6 months).
+\end{itemize}
+
+
+\newpage
+
+\subsection{Diagnostics --- Normal model}
+
+\begin{corrbox}
+	The initial diagnostic script called
+	\texttt{result.arch\_lm\_test(lags=10)} \textbf{without}
+	\texttt{standardized=True}. This test then runs on the
+	raw residuals of the mean model, not on the residuals standardized by the
+	GARCH --- which almost always rejects strongly for a series of
+	financial returns, not because the GARCH is misspecified, but
+	because this is expected for any return series before
+	volatility modeling. Seemingly contradictory result:
+	\begin{center}
+		\begin{tabular}{| p{4.7cm} | p{4.7cm} |}
+			\hline
+			Test & Result \\
+			\hline
+			Ljung-Box on squared standardized residuals (lags 10, 20) & $p=0{,}933$ / $0{,}591$ --- no residual ARCH effect \\
+			\hline
+			ARCH-LM (raw residuals, bug) & $p \approx 0{,}0000$ --- apparent rejection \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\textbf{Correction:} re-run with \texttt{standardized=True}.
+	Result: statistic $=4{,}14$, $p=0{,}941$ --- consistent with the
+	Ljung-Box test. The two tests agree once correctly run
+	on the standardized series. No actual misspecification of the
+	model: the contradiction was a test configuration error,
+	not a flaw in the model.
+\end{corrbox}
+
+\newpage 
+
+\subsubsection{Fat tails}
+\label{sec:garch-fattails}
+
+Excess kurtosis of standardized residuals: \textbf{1.620} (Normal $=0$).
+The QQ-plot against the Normal distribution shows a clear
+deviation in the tails.
+Range of standardized residuals: $-5{,}91$ to $+5{,}02$ --- under a
+true Normal distribution, values at $\pm5$ standard deviations would
+be nearly impossible at this sample size.
+
+\vspace{0.8cm}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.45\linewidth}
+		\includegraphics[width=1\linewidth]{02_returns_histogram_vs_normal.png}
+		\caption{Histogram of returns against the Normal distribution}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.45\linewidth}
+		\includegraphics[width=1\linewidth]{05_qqplot_normal_model.png}
+		\caption{QQ-plot, Normal model}
+	\end{subfigure}
+	\caption{Evidence of fat tails under the Normal specification.}
+	\label{fig:fattails-normal}
+\end{figure}
+
+\textbf{Decision:} re-estimate with a Student's~$t$
+innovation distribution.
+
+\vspace{0.6cm}
+
+\subsection{GARCH(1,1) --- Student's $t$ distribution (second specification)}
+
+\begin{table}[H]
+	\centering
+	\caption{GARCH(1,1), Student's $t$ innovations}
+	\begin{tabular}{lrr}
+		\toprule
+		Parameter & Estimate & Significance \\
+		\midrule
+		$\mu$ & $-0{,}00578$ & $p=0{,}368$, not significant \\
+		$\omega$ & $0{,}000651$ & $p=0{,}099$, \textbf{not significant} (vs $p=0{,}031$ under Normal) \\
+		$\alpha_1$ & $0{,}0374$ & $p \approx 3{,}3\times10^{-12}$ \\
+		$\beta_1$ & $0{,}9611$ & $p<0{,}001$ \\
+		$\nu$ & $7{,}0414$ & $p \approx 4{,}1\times10^{-22}$ \\
+		\midrule
+		\multicolumn{3}{l}{Log-likelihood $=-2818{,}39$ ; AIC $=5646{,}78$ ; BIC $=5678{,}46$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{itemize}
+	\item $\alpha+\beta = 0{,}9985$ (vs $0{,}9945$ under Normal) $\Rightarrow$
+	\item Implied half-life $\approx 462$ days ($\approx$~18 months), nearly 4 times longer than under the Normal specification.
+\end{itemize}
+
+\vspace{0.3cm}
+
+\begin{limitbox}
+	This genuine sensitivity of persistence $\alpha+\beta$ to
+	the distributional assumption (0.9945 vs 0.9985) is not a
+	rounding artifact --- it is treated as a range, not a single
+	figure, until the sub-period stability test
+	(section~\ref{sec:garch-stability}). $\omega$ loses its significance
+	under this specification --- flagged, not dismissed.
+\end{limitbox}
+
+\vspace{0.6cm}
+
+\subsection{Model comparison and selection}
+
+
+\begin{table}[H]
+	\centering
+	\caption{Normal vs Student's $t$ comparison}
+	\begin{tabular}{lrr}
+		\toprule
+		Criterion & Normal & Student's $t$ \\
+		\midrule
+		AIC & 5808.34 & \textbf{5646.78} \\
+		BIC & 5833.69 & \textbf{5678.46} \\
+		Log-likelihood & $-2900{,}17$ & \textbf{$-2818{,}39$} \\
+		Ljung-Box $p$ (lag 10) & 0.933 & 0.972 \\
+		ARCH-LM $p$ (standardized) & 0.941 & 0.976 \\
+		Excess kurtosis (empirical) & 1.620 & 1.831 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+AIC and BIC clearly favor the Student's~$t$ specification
+($\Delta$AIC $\approx 161{,}6$, $\Delta$BIC $\approx 155{,}2$ ---
+both well beyond conventional model comparison
+thresholds).
+
+\vspace{0.5cm}
+
+\begin{corrbox}
+	An initial reading of the Student's~$t$ diagnostics flagged the
+	empirical excess kurtosis of 1.831 as "still too high, tails
+	not absorbed" --- but this comparison used 0 as the
+	reference, a benchmark valid only for a
+	\textbf{Normal} model. For a Student's~$t$ model with $\nu$ degrees of
+	freedom, the theoretical excess kurtosis equals
+	$6/(\nu-4)$. With $\nu = 7{,}0414$:
+	$6/3{,}0414 \approx \mathbf{1{,}973}$.
+	The empirical value (1.831) is close to this theoretical value
+	(1.973) --- this is a \textbf{good} result, indicating that the estimated
+	$\nu$ correctly describes the actual shape of the residual
+	distribution. The initial flag was a diagnostic threshold
+	error (comparison against the wrong reference), not an actual
+	flaw in the model.
+\end{corrbox}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{06_qqplot_studentt_model.png}
+	\caption{QQ-plot, Student's $t$ model --- visual confirmation of the correction above.}
+	\label{fig:qqplot-studentt}
+\end{figure}
+
+\subsection{Final decision}
+
+\textbf{Model selected: GARCH(1,1) with Student's~$t$ innovations
+	($\nu \approx 7{,}04$).} The Ljung-Box and standardized
+ARCH-LM tests both confirm the absence of residual conditional
+heteroskedasticity. The empirical kurtosis closely matches
+the model-implied kurtosis. AIC and BIC both favor this
+specification over the Normal alternative, decisively.
+
+The series of standardized residuals from this model constitutes the project's
+operational $\Delta Y(t)$ variable, used as the volatility shock
+input for the rest of the document.
+
+\newpage
+
+\subsection{Economic interpretation}
+
+\begin{econbox}[What $\omega$, $\alpha$, $\beta$ mean]
+	
+	The chosen model says: tomorrow's expected volatility is a
+	weighted combination of 
+	
+	\begin{itemize}
+		\item a long-run reference level,
+		\item the size of today's price shock
+		\item the volatility already observed today
+	\end{itemize}
+	
+	\textbf{$\alpha \approx 0{,}037$}:
+	only 3.7\,\% of a single day's shock feeds directly through
+	into tomorrow's volatility estimate --- an isolated piece of bad news
+	does not, by itself, strongly move the market's anticipated
+	volatility. \textbf{$\beta \approx 0{,}961$}: about 96\,\% \\of
+	today's volatility level persists into tomorrow --- by far the
+	dominant term. \textbf{Volatility is mostly inertia}, not a
+	reaction to an isolated event.
+\end{econbox}
+
+\vspace{2cm}
+
+\begin{econbox}[What persistence and half-life mean]
+	
+	$\alpha+\beta \approx 0{,}9985$, i.e. a half-life of about 462
+	trading days --- nearly \textbf{18 months} for a volatility shock
+	to lose half its intensity. In plain terms: when EUR/USD
+	volatility spikes (after a surprise central bank decision or
+	a geopolitical shock), the elevated uncertainty does \textbf{not}
+	dissipate within a few days or weeks --- it fades slowly, over more
+	than a year, before returning close to its reference level.
+	\textbf{Important caveat}: section~\ref{sec:garch-stability}
+	shows that this 18-month figure is itself unstable depending on the
+	sub-period (from 2--3 months to about a year). The honest statement is:
+	EUR/USD volatility shocks take between 2 months and more than
+	a year to fade, depending on the period considered --- not a single
+	figure to cite.
+\end{econbox}
+
+\newpage
+
+\begin{econbox} [What fat tails ($\nu \approx 7$) mean --- a concrete illustration]
+	
+	The most extreme daily move in the sample
+	($\approx -2{,}67\,\%$) corresponds to a standardized shock
+	of about 5.9 standard deviations under the fitted model.
+	\begin{itemize}
+		\item \textbf{Under the Normal model}: probability of about
+		$1{,}7\times 10^{-9}$ --- an event with \textbf{1 chance in
+			576 million trading days}, i.e. once every
+		\textbf{2.3 million years}. Since the project's sample only
+		covers 16 years, nonetheless observing this move shows that
+		the Normal model tells an implausible story about
+		the market's actual behavior.
+		\item \textbf{Under the chosen Student's~$t$ model} ($\nu \approx 7{,}04$):
+		probability of about $0{,}00029$ --- a frequency of about
+		\textbf{once every 14 years}. A plausible frequency for a
+		"large but not unprecedented" shock over a 16-year sample
+		that includes central bank surprises and acute
+		risk-aversion episodes.
+	\end{itemize}
+	In plain terms: a model assuming Normal shocks would lead one to treat
+	large EUR/USD moves as near-impossible "black swan" events
+	--- only to be caught off guard when they occur, a well-documented
+	failure mode in risk management. The Student's~$t$ model tells a
+	much more realistic story: large moves are rare, but not so rare
+	that a market participant could assume they will
+	never happen.
+\end{econbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{09_tail_probability_comparison.png}
+	\caption{Probability of the sample's most extreme move, under the two specifications --- the gap between "once every 2.3 million years" and "once every 14 years."}
+	\label{fig:tail-probability}
+\end{figure}
+
+
+\vspace{0.6cm}
+
+\begin{econbox}[For a market observer]
+	
+	EUR/USD volatility moves in slow, persistent waves rather
+	than by daily chance; it takes months
+	(with genuine uncertainty about the exact number) to calm down after
+	a shock; and it produces large, sudden moves
+	noticeably more often than a "textbook Normal" view of the
+	market would suggest. In practice, this justifies treating
+	current volatility as an informative, slowly evolving signal
+	--- and directly motivates the project's next step: building a
+	volatility-sensitive price range
+	(section~\ref{sec:magnitude}, then section~\ref{sec:price-range})
+	rather than relying on a single fixed estimate of the
+	possible size of a move.
+\end{econbox}
+
+\newpage
+
+\subsection{Known limitations of this step}
+
+\begin{limitbox}
+	\begin{itemize}
+		\item $\alpha+\beta$ is strongly sensitive to the
+		distributional assumption (0.9945 vs 0.9985) --- the implied
+		persistence and half-life must be reported as a range,
+		not a single confident figure, pending a stability test by
+		sub-periods (section~\ref{sec:garch-stability}).
+		\item $\omega$ is not statistically significant under the
+		Student's~$t$ specification --- flagged, not resolved at this stage.
+		\item This entire specification relies solely on
+		daily noon-rate data (\texttt{DEXUSEU} is the Federal
+		Reserve's noon reference rate, not a market
+		closing price --- \S\ref{sec:garch-data}), with no
+		intraday realized volatility --- a data-access limitation
+		documented again later in the project
+		(section~\ref{sec:covid}).
+	\end{itemize}
+\end{limitbox}
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Temporal stability of the GARCH}
+\label{sec:garch-stability}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Why this test precedes the choice of regime \\ detection method}
+
+This test validates the \textbf{measurement tool} itself (the GARCH model),
+not its operational use (price ranges, regime detection).
+
+It asks whether the single GARCH(1,1) calibrated on the full 2010--2026 sample
+--- the one used throughout the document --- is a
+stable description of volatility dynamics over time, or an average that poorly represents each sub-period taken in isolation.
+
+This test was deliberately conducted \textbf{before} choosing a regime detection method (HMM vs Markov-Switching GARCH), since the stability result was itself meant to inform this choice: applying a simple HMM to the \textbf{$\sigma(t)$} of an unstable global GARCH would inherit that instability as a hidden bias, whereas a genuinely unstable GARCH is itself an argument for a Markov-Switching GARCH (which re-estimates $\alpha$, $\beta$, $\omega$ by regime) rather than for a
+simpler two-step approach.
+
+\subsection{Method}
+
+The full sample has 4,175 observations. 5 periods divide it exactly: $4175/5 = 835$. This choice is motivated solely by this arithmetic property.
+
+The split is \textbf{chronological, non-overlapping, of equal
+	size} --- not defined by economically motivated breaks
+("before/after COVID", "before/after the euro-area debt
+crisis"). A deliberate choice to avoid selection bias:
+choosing break dates based on known economic events would risk
+unknowingly selecting dates that confirm an
+already-assumed narrative rather than neutrally testing stability.
+
+\vspace{0.3cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Periods used}
+	\begin{tabular}{|p{2.7cm}|c|p{3.2cm}|}
+		\hline
+		Period & Date range & $n$ \\
+		\hline
+		1 & 2010-01-05 to 2013-05-01 & 835 \\
+		\hline
+		2 & 2013-05-02 to 2016-08-29 & 835 \\
+		\hline
+		3 & 2016-08-30 to 2020-01-07 & 835 \\
+		\hline
+		4 & 2020-01-08 to 2023-05-10 & 835 \\
+		\hline
+		5 & 2023-05-11 to 2026-09-11 & 835 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+Each period's GARCH(1,1) with Student's~$t$ innovations is
+estimated independently, using the specification already validated in
+section~\ref{sec:garch}.
+
+\subsection{Results}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Estimated parameters by period}
+	\begin{tabular}{lrrrrrr}
+		\toprule
+		Period & $\omega$ & $\alpha$ & $\beta$ & $\nu$ & $\alpha+\beta$ & Half-life (days) \\
+		\midrule
+		1 & 0.004378 & 0.0283 & 0.9612 & 12.59 & 0.9895 & 65.5 \\
+		2 & 0.000382 & 0.0386 & 0.9614 & 5.95 & \textbf{0.999991} & \textbf{80,366 (not significant --- \S\ref{sec:garch-stability-p2})} \\
+		3 & 0.000233 & 0.0170 & 0.9809 & 10.58 & 0.9979 & 335.1 \\
+		4 & 0.003341 & 0.0720 & 0.9192 & 6.89 & 0.9912 & 78.5 \\
+		5 & 0.001878 & 0.0408 & 0.9494 & 5.54 & 0.9902 & 70.5 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.6cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{01_alphabeta_vs_halflife.png}
+	\caption{$\alpha+\beta$ and implied half-life by period --- a direct visualization of the non-linearity that the table alone does not show.}
+	\label{fig:alphabeta-halflife}
+\end{figure}
+
+\vspace{0.6cm}
+
+\subsection{Diagnosis of the Period 2 anomaly}
+\label{sec:garch-stability-p2}
+
+Period 2's implied half-life ($\approx 80,366$ days,
+$\approx 220$ years) is not economically meaningful and was
+investigated before any interpretation.
+
+\vspace{0.3cm}
+
+\textbf{Root cause:} only $\omega$ is not statistically
+distinct from zero in this sub-sample ($p=0{,}519$). The GARCH's
+long-run (unconditional) variance equals $\omega/(1-\alpha-\beta)$.
+
+When $\alpha+\beta$ is very close to 1 (here, 0.999991) and
+$\omega$ is close to zero and imprecisely estimated, this ratio becomes
+numerically unstable --- \textbf{\textit{a tiny change in the denominator produces
+		a huge variation in the implied half-life}}. 
+
+This is a numerical fragility
+well known in GARCH models operating near the IGARCH boundary
+($\alpha+\beta=1$ exactly), not a sign that the model
+itself has failed.
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{05_calm_narrative_debunked.png}
+	\caption{The "calm period" narrative for Period 2, compared against the stress-regime share observed in 2014--2015 by the MS-GARCH.}
+	\label{fig:calm-narrative-debunked}
+\end{figure}
+
+\textbf{Conclusion on Period~2:} $\alpha$ and $\beta$ themselves
+remain valid and interpretable (consistent with the other four
+periods); the derived half-life, however, must be treated as not
+meaningful and should never be cited alone without this explanation.
+
+
+\subsection{Overall stability conclusion --- revised after a formal test}
+
+Excluding the Period 2 half-life artifact (while keeping
+its valid $\alpha, \beta$ estimates), the point
+estimates vary substantially from one period to another ---
+half-lives of about 65--80 days (Periods 1, 4, 5) to about
+335 days (Period 3). This large gap in half-life corresponds to a
+modest absolute gap in $\alpha+\beta$ itself (0.0067 to 0.0084) ---
+the half-life formula, $\ln(0{,}5)/\ln(\alpha+\beta)$, is strongly
+non-linear near the $\alpha+\beta=1$ boundary, so that
+small differences in the raw parameter translate into large differences
+in the derived half-life. Both facts are true at the same time and do not
+cancel each other out: the underlying parameter gaps are modest in
+absolute terms, and their practical consequence (how long a shock
+takes to fade) is large.
+
+\newpage
+
+\begin{corrbox}
+	The earlier version of our calculations led us to conclude, from the sole %(section~\ref{sec:garch-stability})
+	table above, that "the single GARCH(1,1) on the full
+	sample is not temporally stable." \textbf{This
+		overstated what the data can actually support.} A
+	likelihood-ratio test comparing the 5 independently fitted
+	sub-period models (5 periods $\times$ 5
+	parameters, including $\mu$ --- 25 parameters in total) to the single
+	full-sample model (5 parameters) gives:
+	\[
+	LR = 2 \times \big[(-2806{,}77) - (-2818{,}39)\big] = 23{,}24,
+	\qquad df = 20, \qquad p = 0{,}277.
+	\]
+	\[
+	\text{AIC: } 5646{,}78 \text{ (single model)} \text{ vs } 5663{,}53 \text{ (5 separate periods)}
+	\]
+	\[
+	\text{BIC: } 5678{,}46 \text{ (single model)} \text{ vs } 5821{,}95 \text{ (5 separate periods)}
+	\]
+	\textbf{At $p=0{,}277$, the null hypothesis of a single,
+		stable set of parameters across the 5 periods cannot be rejected at any
+		conventional threshold.} AIC and BIC both prefer the
+	single model over the 5 separate models (lower is better for both
+	criteria) --- the added flexibility of period-specific
+	parameters does not offset its added complexity under either
+	criterion.
+\end{corrbox}
+
+\vspace{0.6cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{06_single_vs_5period_model.png}
+	\caption{Single model vs 5 separate models --- the likelihood-ratio test ($LR=23{,}24$, $p=0{,}277$) as statistical evidence.}
+	\label{fig:single-vs-5period}
+\end{figure}
+
+\newpage
+
+\textbf{General conclusion:} the point estimates in the table
+above do genuinely differ from one period to another, but
+\textbf{this variation is not statistically established} as
+genuine instability rather than sampling noise around a
+single true set of parameters. The honest summary is: \textbf{\emph{point
+		estimates vary from one sub-period to another; a formal
+		likelihood-ratio test does not establish that this variation
+		reflects genuine parameter instability rather than chance.}}
+This is a markedly weaker claim than "the model is
+unstable."
+
+\subsection{Implication for the choice of regime detection method}
+
+This result nonetheless informed the project's next step (regime
+detection), but the reasoning must be stated cautiously: a
+simple HMM applied to the $\sigma(t)$ generated by the single
+full-sample GARCH \emph{could} inherit a distortion specific to
+certain periods, but this document's formal test does not establish
+that such a distortion is statistically real. The case for
+a \textbf{Markov-Switching GARCH} therefore rests more solidly on
+AIC (5633.27 vs 5646.78, favoring the MS-GARCH ---
+section~\ref{sec:msgarch}) than on any "confirmed instability"
+from this document --- and even there, \textbf{the BIC prefers the single-regime model} (5696.64 vs 5678.46). 
+
+The honest framing is: the
+MS-GARCH was pursued because it is the theoretically more
+appropriate tool for regime-dependent dynamics and because it wins
+on an information criterion, not because this stability test
+proved the single-regime model to be inadequate.
+
+\newpage
+
+\subsection{Economic interpretation}
+
+\begin{econbox}
+	This document's revised conclusion has a direct economic
+	reading, easy to miss amid the statistical detail: \textbf{there
+		is no solid evidence that the persistence of EUR/USD volatility
+		behaves differently across eras} --- a 2011 shock and a 2023
+	shock fade at statistically indistinguishable rates, as far as
+	this test can tell. For operational use, this is reassuring in a
+	precise sense: the single full-sample GARCH is not clearly the
+	wrong tool because "market behavior has fundamentally
+	changed" --- the more mundane explanation (sampling
+	variation in a genuinely noisy process) cannot be ruled out, and
+	Occam's razor favors it given the formal test's result.
+	
+	At the same time, the corrected Period 2 narrative is a useful
+	warning against another common error: reaching for a
+	plausible economic story ("it was a calm period") to
+	explain an inconvenient statistical result, without checking it against
+	independent evidence. The story seemed right at the time; it
+	turned out to be false once the project had better tools (the
+	MS-GARCH's regime classification) to check it. The
+	practical lesson: a numerically fragile estimate ($\omega$ close to
+	zero) deserves a flagged \emph{statistical} explanation (the
+	IGARCH-boundary fragility, which holds) rather than an improvised
+	\emph{economic} explanation to make the figure less surprising
+	(the calm-period narrative, which does not hold).
+\end{econbox}
+
+\vspace{0.5cm}
+\begin{limitbox}
+	\texttt{garch\_stability\_comparison.csv} keeps only the
+	point estimates ($\omega, \alpha, \beta, \nu$) by period
+	--- neither their standard errors nor their $p$-values. The $p$-values
+	discussed above for Period 2 (e.g.\ $p=0{,}519$ for $\omega$)
+	come from an interactive re-estimation of that period alone,
+	run in the console rather than captured in the saved output of the
+	script. A reader trying to \\reproduce this diagnostic from the
+	CSV alone could not do so. This gap is flagged as such rather
+	than corrected retroactively here.
+\end{limitbox}
+
+% ═════════════════════════════════════════════════════════════════
+\newpage
+
+\section{Baseline regression --- $r(t+1)$ on the GARCH volatility shock}
+\label{sec:baseline}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective}
+
+Test whether the level shift in volatility estimated by the GARCH
+explains the next day's EUR/USD return --- a \textbf{baseline}
+specification, with no control variables, as decided in the
+introduction (\S\ref{sec:spec-iterations}): the control variables
+(rate differential, DXY) are deliberately left out at this stage, so as
+not to confound the estimate of the volatility shock's own effect.
+
+\subsection{Specification}
+
+
+\begin{center}
+	\begin{keyeq}
+		\begin{equation}
+			r(t+1) = \alpha + \beta_1 \, \Delta Y(t) + \beta_2 \, r(t) + u(t)
+		\end{equation}
+	\end{keyeq}
+\end{center}		
+
+\vspace{0.8cm}
+
+where 
+\begin{itemize}
+	\item $r(t)$ is the daily EUR/USD log return ($\times 100$)
+	\item $\Delta Y(t) = \ln\!\big(\sigma(t)/\sigma(t-1)\big)$ is the log change in the GARCH's conditional volatility.
+\end{itemize}
+
+\vspace{0.8cm} 
+
+\textbf{Why $\sigma(t)$, not the standardized residual $z(t)$.} 
+
+The GARCH produces two series with opposite statistical properties: 
+\begin{itemize}
+	\item conditional volatility $\sigma(t)$ is a persistent, slowly evolving \textbf{level} (autocorrelated by construction --- that is the whole point
+	of the GARCH)~ 
+	\item the standardized residual $z(t)$ is the cleaned \textbf{shock}, which behaves close to white noise if the GARCH is well specified
+	(confirmed in section~\ref{sec:garch}: no residual ARCH effect).
+\end{itemize}
+
+\vspace{0.8cm} 
+
+Taking
+a "change" in $z(t)$ would amount to computing the change of an already-cleaned series --- not economically meaningful.
+$\Delta Y(t)$, as a \emph{level-shift} signal,
+requires the persistent series, hence $\sigma(t)$.
+
+\newpage
+
+\subsection{Data alignment}
+
+$r(t+1)$ is constructed via a \emph{forward}
+shift (\texttt{shift(-1)}) --- explicitly not a lag ---
+documented in code comments to avoid reversing the
+causal direction (the shock at $t$ explains the return at $t+1$, not the reverse).
+Final sample after alignment and removal of edge
+\texttt{NaN}s: \textbf{4,173 observations} (from the 4,175 original
+log returns).
+
+\subsection{Estimation method}
+
+OLS via \texttt{statsmodels}, with \textbf{HAC
+	(Newey-West) standard errors}, \texttt{maxlags=5}. This choice is motivated by the fact that
+financial return residuals commonly exhibit
+heteroskedasticity and/or residual autocorrelation, which would
+otherwise understate standard errors and inflate apparent
+significance --- a well-documented risk of false positives
+in empirical finance.
+
+\subsection{Results}
+
+\begin{table}[H]
+	\centering
+	\caption{Baseline regression}
+	\begin{tabular}{lrrrr}
+		\toprule
+		& Coef. & Std. err. & $z$ & $P>|z|$ \\
+		\midrule
+		const & $-0{,}0051$ & $0{,}008$ & $-0{,}648$ & $0{,}517$ \\
+		$\Delta Y(t)$ & $-0{,}1546$ & $0{,}240$ & $-0{,}644$ & $0{,}519$ \\
+		$r(t)$ & $0{,}0206$ & $0{,}017$ & $1{,}231$ & $0{,}218$ \\
+		\midrule
+		\multicolumn{5}{l}{$R^2 = 0{,}001$ ; adjusted $R^2 = 0{,}000$ ; $F = 0{,}976$ ($p=0{,}377$)} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Model not jointly significant} 
+($p=0{,}377$).
+\textbf{$\beta_1$ $(\Delta Y(t)$): $-0{,}1546$, $p=0{,}519$ --- not
+	significant.} No predictive effect detected of the volatility
+level shift on the direction of the next day's return.
+\textbf{$\beta_2$ $(r(t))$: $0{,}0206$, $p=0{,}218$ --- not
+	significant.} No momentum or mean reversion detected at a
+one-day horizon. Residual diagnostics: Jarque-Bera
+$p \approx 1{,}6\times 10^{-126}$ (strongly non-normal residuals,
+excess kurtosis $\approx 4{,}8$) --- expected given the
+fat-tailed nature of FX returns already documented
+(section~\ref{sec:garch}).
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.48\linewidth}
+		\includegraphics[width=\linewidth]{01_scatter_rt1_vs_deltay.png}
+		\caption{Scatter plot of $r(t+1)$ against $\Delta Y(t)$}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\linewidth}
+		\includegraphics[width=\linewidth]{03_forest_plot_coefficients.png}
+		\caption{\emph{Forest plot} of the coefficients}
+	\end{subfigure}
+	\caption{Visual absence of relationship, an immediate complement to the regression table.}
+	\label{fig:baseline-results}
+\end{figure}
+\vspace{0.8cm}
+\
+\subsection{Interpretation}
+
+This is a \textbf{null result on direction}, not a failed
+model. It is consistent with the weak-form market efficiency
+hypothesis stated in the introduction (\S\ref{sec:intro}): on a
+market as liquid as EUR/USD spot, the \textbf{direction}
+of the next day's return is expected to be nearly unpredictable from
+the contemporaneous volatility level or the previous day's return alone.
+This aligns with the well-documented empirical finding that
+structural exchange rate models struggle to beat a random
+walk at short horizons \citep{meeserogoff1983}.
+\vspace{0.4cm}	
+\textbf{What this does not call into question:} objective (a) of the project
+--- quantitatively measuring a market fear~/~volatility shift
+--- had already been achieved and validated in section~\ref{sec:garch},
+independently of whether this shift predicts the direction
+of the return. This regression tests one specific, falsifiable use
+of this measure; that it returns a null result is itself a
+valid, documented result, not a reason to add variables
+until significance is achieved (a \emph{p-hacking} risk
+explicitly avoided here).
+
+\newpage
+\subsection{What this means economically, even setting statistical significance aside}
+
+\begin{econbox}
+	Even \emph{if} these coefficients reflected a real relationship,
+	would the effect be large enough to matter for someone
+	trading or managing risk on EUR/USD? \textbf{\textit{The answer is no}}, on
+	both counts.
+	
+	\vspace{0.2cm}		
+	\textbf{$\Delta Y(T)$ (coef. $=-0{,}1546$):} even at rarely
+	observed levels of the volatility shock, $\pm 0{,}05$
+	(roughly the 95\textsuperscript{th} percentile of
+	\texttt{$\delta Y(T)$}) up to $\pm 0{,}20$ (close to the
+	99.5\textsuperscript{th}--99.9\textsuperscript{th} percentile, near the
+	extreme tail of the observed distribution, not a
+	typical day) --- the implied predicted shift in tomorrow's return
+	is about $-0{,}008\,\%$ to $-0{,}031\,\%$, still smaller than
+	typical EUR/USD \emph{bid-ask} spreads and transaction costs on
+	any real trading platform. \textbf{This
+		reinforces rather than weakens the conclusion}: even a large,
+	rarely observed volatility shock --- not just an
+	ordinary shock --- does not produce an economically
+	meaningful move.
+	
+	\vspace{0.2cm}
+	
+	\textbf{$r(t)$ (coef. $=0{,}0206$):} likewise, a typical
+	previous-day return of $\pm 0{,}5\,\%$ (roughly the sample
+	standard deviation, \S\ref{sec:garch}) would shift tomorrow's
+	predicted return by about $\pm 0{,}01\,\%$ --- again, negligible
+	economically taken in isolation.
+	
+	\vspace{0.2cm}
+	
+	\textbf{In plain terms, for a market observer:} knowing that
+	volatility jumped yesterday, or which direction the price moved
+	yesterday, provides no exploitable edge --- statistically or
+	economically --- for guessing whether EUR/USD will rise or fall
+	tomorrow. Anyone building a directional \emph{day-trading}
+	rule on either of these two inputs alone
+	would, on this evidence, do no better than guessing --- the
+	well-known \textbf{\textit{"no \\free lunch"}} conclusion of market efficiency, illustrated here with figures specific to this
+	project rather than asserted in the abstract.
+\end{econbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{04_predicted_effect_with_percentiles.png}
+	\caption{Predicted effect on $r(t+1)$ at the $\pm 0{,}05$ / $\pm 0{,}20$ percentiles of $\Delta Y(t)$ --- the magnitude discussed above.}
+	\label{fig:baseline-predicted-effect}
+\end{figure}
+
+\subsection{What this result does not settle}
+
+\begin{itemize}
+	\item Whether $\Delta Y(t)$ explains the \textbf{magnitude} of the return
+	($|r(t+1)|$) rather than its direction is not tested at this stage, and
+	is a theoretically more natural target given that the GARCH
+	itself is a volatility-magnitude model
+	(section~\ref{sec:magnitude}).
+	\item Whether control variables (rate differential, DXY)
+	change this result --- tested next
+	(section~\ref{sec:controls}), with a comparison of $\beta_1$
+	before/after their addition.
+	\item Whether volatility regimes can still be significantly
+	detected from $\sigma(t)$ or $\Delta Y(t)$,
+	independently of return predictability --- a distinct
+	question, addressed at a later stage
+	(sections~\ref{sec:regime-hmm} and~\ref{sec:msgarch}).
+\end{itemize}
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Regression with controls --- robustness of the baseline}
+\label{sec:controls}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective}
+
+Test whether adding two control variables --- the Fed/ECB
+interest rate differential and a broad dollar proxy (DXY) --- changes
+the baseline result (\S\ref{sec:baseline}: $\beta_1$ on
+$\Delta Y(t)$ not significant, model not jointly significant).
+The goal is not to seek significance, but to
+check whether the "no controls" null result on $\Delta Y(t)$ might have been masking
+a confounded relationship.
+
+\subsection{Sourcing the control variables}
+
+The three series come from FRED (the same stable CSV
+endpoint already used for EUR/USD)
+\begin{table}[H]
+	\centering
+	\caption{Control variables}
+	\begin{tabular}{lll}
+		\toprule
+		Variable & FRED series & Frequency \\
+		\midrule
+		Fed Funds rate & \texttt{DFF} & Daily \\
+		ECB deposit rate & \texttt{ECBDFR} & Daily \\
+		DXY proxy & \texttt{DTWEXBGS} & Daily \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\textbf{Decision: ECB deposit rate, not the MRO or marginal
+	lending rate.} FRED also hosts \texttt{ECBMRRFR} (main refinancing
+rate) and \texttt{ECBMLFR} (marginal lending facility). The deposit
+rate (\texttt{ECBDFR}) is chosen because it is considered the ECB's
+\emph{de facto} reference rate under the ample-liquidity
+regime under which the Eurosystem has operated for most of
+the sample period --- consistent with the recent literature on
+FX models based on the rate differential.
+
+\vspace{0.3cm}
+
+\begin{limitbox}
+	\texttt{DTWEXBGS} (broad, trade-weighted dollar index)
+	is \textbf{not} the commercial DXY index. The DXY weights a basket
+	of 6 currencies dominated by the euro ($\approx 58\,\%$ weight);
+	\texttt{DTWEXBGS} is a broader basket including emerging
+	market currencies. Both measure "dollar strength"
+	but are not interchangeable. It was chosen as an accessible
+	alternative hosted by FRED, consistent with the project's overall
+	sourcing strategy (an imperfect but well-targeted and
+	reproducible measure rather than an unreachable proprietary measure ---
+	the same logic already applied to the choice of the volatility proxy itself,
+	\S\ref{sec:data-sources}).
+\end{limitbox}
+
+\subsection{Calendar alignment check}
+
+Before merging, a check for date mismatches between the
+control series and the EUR/USD return series: 2 dates present in the
+controls but absent from the returns (a start-of-sample edge
+effect, and one partial day not recorded by FRED); 20
+dates present in the EUR/USD returns but absent from the
+controls (mostly identifiable U.S. federal
+closures not reflected in \texttt{DFF}, e.g. the
+closures linked to Hurricane Sandy in 2012, or winter storm
+Jonas in 2016 --- while FX continued to trade via
+other financial centers).
+
+\vspace{0.2cm}
+
+\textbf{Conclusion:} 22 misaligned dates out of $\approx 4,175$
+($\approx 0{,}5\,\%$), all consistent with identifiable calendar
+effects rather than a data quality issue. Handled
+via an inner join, not investigated further.
+
+The sample aligned with the controls has 4,153
+observations, versus 4,173 in the original baseline
+(\S\ref{sec:baseline}) --- a slight reduction due to the calendar
+mismatches above. For the before/after comparison of $\beta_1$
+to be meaningful, \textbf{the baseline model is
+	re-estimated on this same 4,153-observation sample}, rather than
+compared directly to the original baseline result on 4,173
+observations. This isolates the effect of adding the controls from the
+effect of a changed sample.
+
+\subsection{Specification decisions}
+
+Full model:
+
+\begin{keyeq}
+	\begin{equation}
+		r(t+1) = \alpha + \beta_1 \Delta Y(t) + \beta_2 r(t) + \beta_3\,
+		diff_{rate}(t) + \beta_4\, r_{dxy}(t) + u(t)
+	\end{equation}
+\end{keyeq}
+
+\vspace{0.3cm}
+\begin{itemize}
+	\item \textbf{	$diff_{rate}(t)$: level, not change.}
+	
+	
+	\begin{center}
+		{\large$diff_{rate}(t) = rate_{fed}(t)- rate_{ecb}(t)$}
+	\end{center}
+	
+	
+	
+	Decision: use the \textbf{level}, not the daily
+	change. Policy rates are step functions, only changing on rare
+	monetary policy meeting dates --- a change series would be zero on
+	almost every day and non-zero only at policy shocks, a fundamentally
+	different (event-driven) signal from a continuous uncovered
+	interest rate parity-type differential. The level is also the conventional choice in
+	the uncovered interest rate parity (UIP) literature, which
+	compares rate \emph{levels}, not their changes.
+	
+
+\newpage
+
+	\item \textbf{$r_{dxy}(t)$: log return, not level.}
+	
+	
+	\begin{center}
+		{\large$r_{dxy}(t) = \ln\left(\frac{dxy_{proxy}(t)}{dxy_{proxy}(t-1)}\right)$}
+	\end{center}
+	
+	
+	
+	
+	
+	Decision: use the log return, not the raw index
+	level. \texttt{$dxy\_proxy$} is a price-type index, structurally
+	similar to EUR/USD itself --- using its level would risk the
+	same spurious regression problem (non-stationarity,
+	\citep{grangernewbold1974}) already identified and corrected for EUR/USD
+	(\S\ref{sec:spec-iterations}). Consistent treatment across all
+	price-type series in the model.
+\end{itemize}
+
+
+
+
+
+\subsection{Results}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Baseline re-estimated on the aligned sample ($n=4,153$)}
+	\begin{tabular}{lrl}
+		\toprule
+		& Coef. & Signif. \\
+		\midrule
+		$\Delta Y(t)$ & $-0{,}1329$ & $p=0{,}578$, not significant \\
+		$r(t)$ & $0{,}0196$ & $p=0{,}243$, not significant \\
+		\midrule
+		\multicolumn{3}{l}{$F=0{,}8512$ ($p=0{,}427$) --- not jointly significant} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Extended specification with controls ($n=4,153$)}
+	\begin{tabular}{lrl}
+		\toprule
+		& Coef. & Signif. \\
+		\midrule
+		$\Delta Y(t)$ & $-0{,}1308$ & $p=0{,}584$, not significant \\
+		$r(t)$ & $0{,}0235$ & $p=0{,}432$, not significant \\
+		$diff_{rate}(t)$ & $0{,}0100$ & $p=0{,}257$, not significant \\
+		$r_{dxy}(t)$ & $0{,}8591$ & $p=0{,}865$, not significant (the least of all) \\
+		\midrule
+		\multicolumn{3}{l}{$F=0{,}7265$ ($p=0{,}574$) --- not jointly significant} \\
+		\multicolumn{3}{l}{AIC $=6337$, BIC $=6369$ (vs $6334$ / $6353$ for the re-estimated baseline --- \textbf{both worsen})} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.4cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Stability comparison of $\beta_1$ --- the central test of this step}
+	\begin{tabular}{lrr}
+		\toprule
+		& $\beta_1(\Delta Y(t))$ & $p-value$\\
+		\midrule
+		Before controls & $-0{,}1329$ & $0{,}578$ \\
+		After controls & $-0{,}1308$ & $0{,}584$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.4cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{01_beta1_stability.png}
+	\caption{Stability of $\beta_1$ before~/~after adding the controls.}
+	\label{fig:beta1-stability}
+\end{figure}
+
+$\beta_1$ changes by about $1{,}6\,\%$ in magnitude, the $p-value$ remains
+essentially unchanged. \textbf{No evidence of confounding} --- the null
+effect of the volatility shock on the direction of the next day's return
+is not an artifact of omitting the rate differential or dollar
+strength.
+
+\subsection{Interpretation}
+
+This is a \textbf{robustness confirmation of a null result}, not
+a new finding. Three points are now established
+together:
+
+\begin{enumerate}
+	\item The baseline null result (no directional predictability
+	from $\Delta Y(t)$ or $r(t)$ alone) does not stem from an
+	omitted-variable bias due to the two theoretically most
+	obvious FX confounders.
+	\item Neither $diff_{rate}$ nor $r_{dxy}(t)$ predict, on their
+	own, the direction of the next day's EUR/USD return at this
+	horizon --- consistent with the broader empirical literature on
+	the difficulty of beating a random walk in FX at short horizons
+	\citep{meeserogoff1983}.
+	\item Model fit (AIC/BIC) actually \textbf{worsens}
+	with the added controls, reinforcing the finding that their
+	inclusion is not statistically warranted for this specific
+	target variable (next day's return direction) --- a deliberate
+	stopping point, not an invitation to keep adding
+	variables in search of significance (a
+	\emph{p-hacking} risk explicitly avoided, as already noted in
+	section~\ref{sec:baseline}).
+\end{enumerate}
+
+\newpage
+\textbf{What this does not call into question:} as with the baseline,
+this null result on \emph{direction} says nothing about whether
+$\Delta Y(t)$ explains the \emph{magnitude} of the return
+($|r(t+1)|$), nor about the market regime detection
+objective --- both remain open and distinct questions
+(sections~\ref{sec:magnitude} and~\ref{sec:regime-hmm}).
+
+\subsection{What the two control coefficients mean economically}
+
+\begin{econbox} [$diff_{rate}(t)$ (coef. $=0{,}0100$, $p=0{,}257$)]
+	
+	Economic theory (uncovered interest rate parity, UIP)
+	predicts a relationship between the rate differential and the
+	expected exchange return. Taking this coefficient at face value despite its lack
+	of significance: a one-percentage-point widening of the
+	Fed-ECB rate differential (a fairly large policy move,
+	larger than most individual rate decisions) would be
+	associated with a shift of only $0{,}01\,\%$ in the expected
+	next-day return --- an effect too small to matter
+	economically, even before considering that it is statistically
+	indistinguishable from zero. This null result is not an anomaly
+	specific to this project: it echoes a well-known puzzle in
+	international finance (the "\emph{forward premium puzzle}",
+	\citep{fama1984}), where UIP frequently fails to hold, or
+	holds with an unexpected sign, in short-horizon empirical
+	tests. This project's finding is consistent with this broader
+	literature, decades old, rather than contradicting it.
+\end{econbox}
+
+\vspace{2cm}
+
+\begin{econbox}[$r_{dxy}(t)$ (coef. $=0{,}8591$, $p=0{,}865$)]
+	
+	The coefficient's 95\,\% confidence interval runs from about
+	$-9{,}0$ to $+10{,}7$. In plain terms, this range is compatible with
+	either "the dollar index and the next day's EUR/USD returns
+	move strongly in opposite directions" or
+	"they move strongly in the same direction" or
+	"there is no relationship at all" --- the data at this
+	daily horizon simply do not pin down the relationship one way
+	or the other. This is a materially different (and more
+	informative) finding than "not significant" alone: it says that
+	the estimate carries essentially no exploitable precision,
+	not merely weak or moderate precision.
+\end{econbox}
+
+\begin{center}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{04_r_dxy_wide_ci.png}
+		\caption{95\,\% confidence interval of the $r_{dxy}(t)$ coefficient, $[-9{,}0~;~+10{,}7]$.}
+		\label{fig:r-dxy-wide-ci}
+	\end{figure}
+\end{center}
+
+
+\vspace{0.8cm}
+
+\begin{econbox}[Practical conclusion for anyone building on this model]
+	At a one-day horizon, neither the rate differential nor
+	broad dollar strength provides an exploitable directional signal for
+	EUR/USD, beyond what is already known (nothing) from the volatility
+	shock and momentum terms alone. This does not mean
+	these variables are economically irrelevant to exchange rates
+	in general --- the literature is clear that they matter at
+	other horizons and in other specifications --- only that,
+	in this precise specification (level/return, one day
+	ahead), they add no exploitable information.
+\end{econbox}
+
+\newpage
+
+\subsection{Robustness check of the standard errors, motivated by the strong autocorrelation of "$diff_{rate}(t)$"}
+
+$diff_{rate}(t)$ (the level of the Fed-ECB rate differential) is
+extremely persistent --- autocorrelation of $0{,}998$ at lag~1,
+still $0{,}98$ at lag~20 (an expected property of a policy-rate
+level series, which moves in rare discrete steps and stays
+flat in between; see the same point about its step-function
+nature, \S\ref{sec:controls}). This raised a concern: the
+HAC (Newey-West) standard errors reported above used
+\texttt{maxlags=5}, potentially insufficient to fully correct
+for such persistent autocorrelation --- an under-corrected
+standard error would be too small, potentially overstating
+significance.
+
+\textbf{Check performed:} re-running the extended
+specification with \texttt{maxlags=10} and \texttt{maxlags=20}. The result does not
+change in any meaningful way: \texttt{diff\_rate} and all the
+other coefficients remain far from conventional
+significance thresholds, regardless of the lag choice. This is the
+expected result, not a surprising one --- an overly short
+\texttt{maxlags=5} would, if anything, have \emph{underestimated} the
+true standard errors, meaning the already non-significant result would only become
+\emph{more} clearly non-significant with a longer lag
+window, never less. The robustness check confirms this
+rather than calling the conclusions above into question.
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Magnitude regression --- does the volatility \\ signal  explain $|r(t+1)|$?}
+\label{sec:magnitude}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective and how this test differs from the previous two}
+
+The baseline and control regressions without controls (section~\ref{sec:baseline}) and with controls
+(section~\ref{sec:controls}) tested whether the volatility shock explains the
+\textbf{direction} of the next day's return --- $r(t+1)$, a
+signed quantity. Both returned a robust null result.
+
+This step tests a different target, theoretically more natural
+for a volatility model: the \textbf{magnitude} of the next day's
+return --- $|r(t+1)|$, the size of the move regardless of its
+sign.
+
+\textbf{Important distinction to keep in mind throughout
+	this section:} $|r(t+1)|$ carries \textbf{no directional
+	information}. Whether the actual return is $+0{,}8\,\%$ or
+$-0{,}8\,\%$, $|r(t+1)| = 0{,}8\,\%$ in both cases. A model that
+explains $|r(t+1)|$ well \textbf{is not} a trading signal saying
+whether to buy or sell --- it is a signal about the size of the move to
+expect, in either direction. This is exactly the
+"price range" framing of the project's founding question
+(\S\ref{sec:intro}): not a point forecast, but an interval that
+widens or narrows with the volatility regime.
+
+\subsection{Why a significant result here would not be a new discovery}
+
+This point was raised and clarified before any code was run, and
+is kept here in full because it conditions how the results
+below should be read.
+
+The GARCH model is defined by construction as:
+
+\begin{keyeq}
+	\begin{align}
+		r(t+1) &= \mu + \sigma(t+1) \cdot z(t+1), \qquad z(t+1) \sim \text{i.i.d.}(0,1) \\
+		\sigma^2(t) &= \omega + \alpha\,\varepsilon^2(t-1) + \beta\,\sigma^2(t-1)
+	\end{align}
+\end{keyeq}
+
+\vspace{0.3cm}
+
+In absolute value: $|r(t+1)| \approx \sigma(t+1)\cdot|z(t+1)|$. And
+$\sigma(t+1)$ is \textbf{itself built from $\sigma(t)$}
+via the GARCH recursion --- with $\beta \approx 0{,}961$ (highly
+persistent, confirmed in section~\ref{sec:garch}). 
+
+Asking whether "$\sigma(t)$
+explains $|r(t+1)|$?" therefore comes close to asking
+"did the GARCH do what it was calibrated to do?" --- a
+question already answered affirmatively by the diagnostics of
+section~\ref{sec:garch} (Ljung-Box on the squared standardized
+residuals, not significant $\Rightarrow$ the model correctly captures
+magnitude dynamics).
+
+\vspace{0.1cm}
+
+\textbf{Consequence for interpretation, decided in advance:} a
+significant result here should be documented as an
+\textbf{internal consistency check of the GARCH}, not as a
+new empirical discovery about FX behavior --- unlike
+the direction test, where the null result was itself the finding,
+consistent with, and adding a data point to, the weak-form
+market efficiency literature.
+
+\vspace{0.1cm}
+
+\textbf{The mirror-image expectation, also decided in advance:} a
+\emph{null} result here would be the surprising result, and would point
+to a likely specification problem rather than a genuine
+discovery that "magnitude too is unpredictable" --- the reverse
+logic of the direction test.
+
+\subsection{Two specifications tested side by side}
+
+\textbf{The dilution concern.} 
+
+\vspace{0.3cm}
+
+Throughout this project,
+
+\begin{center}
+	
+	
+	{\large $\Delta Y(t) = \ln\left(\frac{\sigma(t)}{\sigma(t-1)}\right)$}
+\end{center}
+
+\vspace{0.3cm}
+
+The log change in conditional volatility --- has been the standard "shock" variable
+used for the level-shift signal. But
+$\sigma(t)$ is strongly persistent (autocorrelated by construction).
+Taking its log difference could dilute a strong, obvious relationship
+at the \textbf{level}, since a daily change captures much less
+information than the level itself when the underlying series moves
+little, day after day, relative to its own scale.
+
+To distinguish "the magnitude relationship is genuinely weak" from
+"the log-change transformation dilutes an otherwise strong
+level relationship," both are tested:
+
+\vspace{0.3cm}
+
+
+\begin{keyeq}
+	
+	\begin{itemize}
+		\item \textbf{Spec A:} $|r(t+1)| = a + b_1 \cdot \Delta Y(t) + b_2 \cdot |r(t)| + u(t)$
+		\item \textbf{Spec B:} $|r(t+1)| = a + b_1 \cdot \sigma(t)~\text{(level)} + b_2 \cdot |r(t)| + u(t)$
+	\end{itemize}
+\end{keyeq}
+\vspace{0.3cm}
+
+\textbf{The control variable also changes form: $|r(t)|$, not
+	$r(t)$.} In the direction regressions, $r(t)$ tested
+momentum~/~mean reversion. That is not the relevant question
+for magnitude. What matters here is whether the \emph{size} of
+yesterday's move predicts the size of tomorrow's move --- another
+facet of volatility \emph{clustering}. The control is therefore
+switched to $|r(t)|$, decided to be \textbf{mandatory} (not optional)
+at this step, given the change in what is being explained.
+
+\newpage
+
+\subsection{Results}
+
+Sample size: 4,173 observations (same alignment as the
+original baseline).
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Spec A --- $\Delta Y(t)$}
+	\begin{tabular}{lrrrr}
+		\toprule
+		& Coef. & Std. err. & $z$ & $P>|z|$ \\
+		\midrule
+		const & $0{,}3386$ & $0{,}009$ & $39{,}499$ & $0{,}000$ \\
+		$\Delta Y(t)$ & $-0{,}0871$ & $0{,}159$ & $-0{,}549$ & $0{,}583$ --- \textbf{not significant} \\
+		$|r(t+1)|$ & $0{,}1148$ & $0{,}017$ & $6{,}562$ & $0{,}000$ --- significant \\
+		\midrule
+		\multicolumn{5}{l}{$R^2 = 0{,}013$ ; $F=22{,}04$ ($p=3{,}01\times10^{-10}$, model jointly significant)} \\
+		\multicolumn{5}{l}{AIC $=3026{,}94$ ; BIC $=3045{,}95$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+The model is jointly significant, but \textbf{only via
+	$|r(t)|$}, not via $\Delta Y(t)$. $\Delta Y(t)$ itself
+carries no detectable explanatory power here.
+
+\vspace{0.1cm}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Spec B --- $\sigma(t)$ level}
+	\begin{tabular}{lrrrr}
+		\toprule
+		& Coef. & Std. err. & $z$ & $P>|z|$ \\
+		\midrule
+		const & $0{,}0171$ & $0{,}018$ & $0{,}946$ & $0{,}344$ \\
+		$\sigma(t)$ & $0{,}7029$ & $0{,}040$ & $17{,}364$ & $0{,}000$ --- \textbf{strongly significant} \\
+		$|r(t+1)|$ & $0{,}0269$ & $0{,}016$ & $1{,}638$ & $0{,}101$ --- not significant here \\
+		\midrule
+		\multicolumn{5}{l}{$R^2 = 0{,}090$ ; $F=174{,}1$ ($p=2{,}52\times10^{-73}$)} \\
+		\multicolumn{5}{l}{AIC $=2687{,}29$ ; BIC $=2706{,}30$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{02_specB_scatter_sigma.png}
+	\caption{Spec B --- scatter plot of $|r(t+1)|$ against $\sigma(t)$, the only positive relationship in the whole project.}
+	\label{fig:specB-scatter}
+\end{figure}
+
+\vspace{0.1cm}
+
+$\sigma(t)$ is strongly significant. Once included, $|r(t)|$
+loses its significance --- consistent with $\sigma(t)$
+already absorbing the persistence information that $|r(t)|$ alone
+approximated in Spec~A.
+
+\vspace{0.1cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Spec A / Spec B comparison}
+	\begin{tabular}{lrr}
+		\toprule
+		& Spec A ($\Delta Y(t)$) & Spec B ($\sigma(t)$ level) \\
+		\midrule
+		$R^2$ & 0.013 & \textbf{0.090} \\
+		AIC & 3026.94 & \textbf{2687.29} \\
+		BIC & 3045.95 & \textbf{2706.30} \\
+		Shock variable significant? & No ($p=0{,}583$) & \textbf{Yes ($p<0{,}001$)} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.4cm}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}{0.48\linewidth}
+		\includegraphics[width=\linewidth]{03_specA_vs_specB_fit.png}
+		\caption{Fit comparison, Spec A vs Spec B}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.48\linewidth}
+		\includegraphics[width=\linewidth]{04_significance_flip.png}
+		\caption{Significance flip of the shock variable}
+	\end{subfigure}
+	\caption{The two closing figures of the results section: fit comparison, then significance flip.}
+	\label{fig:specA-vs-specB}
+\end{figure}
+
+\vspace{0.2cm}
+
+\textbf{Conclusion on the dilution question:} confirmed. Spec~B
+dominates Spec~A on every criterion ($R^2$, AIC, BIC). The
+log-change transformation used elsewhere in the project
+significantly weakens the signal here --- \textbf{\textit{it is the level of
+		conditional volatility, not its daily change, that carries
+		explanatory power for the magnitude of the next day's return}}.
+
+\subsection{What an $R^2$ of 0.09 means economically --- a worked example}
+
+\begin{econbox}[$R^2$ of 0.09]
+	Using the fitted Spec~B coefficients (const $=0{,}0171$,
+	sigma\_t coefficient $=0{,}7029$):
+	\begin{itemize}
+		\item $\sigma(t) \approx 0{,}25$ (corresponding roughly
+		to the \textbf{0.1\textsuperscript{th} percentile} of the observed
+		$\sigma(t)$ distribution --- essentially the practical floor of the
+		sample, not merely "relatively low"):
+		predicted $|r(t+1)| \approx 0{,}0171 + 0{,}7029\times0{,}25
+		\approx \mathbf{0{,}19\,\%}$.
+		\item $\sigma(t) \approx 0{,}60$ (corresponding roughly
+		to the \textbf{71.6\textsuperscript{th} percentile} --- just above
+		the median, not a turbulent or post-shock extreme as
+		the initial framing suggested):
+		predicted $|r(t+1)| \approx 0{,}0171 + 0{,}7029\times0{,}60
+		\approx \mathbf{0{,}44\,\%}$.
+	\end{itemize}
+\end{econbox}
+
+\newpage	
+
+\textbf{\textit{NB}}:
+
+
+These two values are not two symmetric, representative points
+of "calm vs turbulent" --- one sits at the extreme floor of the
+distribution, the other just above its
+center. Calling 0.60 "turbulent" or
+"shortly after a shock" overstated how unusual this level
+actually is. The qualitative finding survives (a higher
+$\sigma(t)$ does imply a wider expected move), but the
+"roughly twice as wide" comparison above should be read
+as floor-versus-median, not calm-versus-crisis. A properly
+matched pair --- for example the 10\textsuperscript{th}
+and 90\textsuperscript{th} percentiles of $\sigma(t)$ --- would better
+illustrate a genuine calm-versus-turbulent contrast; producing
+this pair requires re-reading the percentiles directly from the
+processed data, not done here.
+
+
+In plain terms: even comparing the practical floor of volatility to a
+fairly ordinary, near-median level, the model's expected move
+roughly doubles --- with zero information about which direction
+that move will take. This is directly usable for
+the project's operational objective --- a volatility-adjusted
+price range~/~risk sizing signal
+(section~\ref{sec:price-range}) --- even though it says nothing about
+direction.
+
+\vspace{0.2cm}
+
+$R^2=0{,}09$ --- is this "a lot"? Only relative to the
+general difficulty of FX forecasting --- the direction
+regressions returned $R^2 \approx 0{,}000$--$0{,}001$, so 0.09
+represents a genuine, usable step forward in explanatory power
+in this context. In absolute terms, $91\,\%$ of the variance of
+move size remains unexplained; this is a modest but
+real signal, not a breakthrough.
+
+\subsection{Was predictive power detected? Yes --- but for a narrower claim than "prediction"}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Direction vs magnitude --- summary}
+	\begin{tabular}{|p{4.7cm}|p{4.2cm}|p{4.2cm}|}
+		\hline
+		& Direction --- $r(t+1)$ & Magnitude --- $|r(t+1)|$ \\
+		\hline
+		Predictive power detected? & No (robust null) & \textbf{Yes} ($R^2=0{,}090$, $p<0{,}001$) \\
+		\hline
+		Usable as a directional bet? & No --- confirmed unusable & No --- magnitude never carries direction \\
+		\hline
+		Usable as an adjusted range? & --- & \textbf{Yes} --- exactly this signal \\
+		\hline
+		Scientifically surprising finding? & Somewhat --- a well-documented robust null is informative in itself & No --- expected almost directly from the GARCH's own construction (\S~above) \\
+		\hline
+	\end{tabular}
+\end{table}
+
+Both findings are true at the same time, without contradiction: the
+magnitude result is a \textbf{real,
+	statistically robust, and operationally exploitable} finding, and at
+the same time \textbf{not a new scientific discovery}, since it
+follows closely from how the GARCH itself is built. Neither
+framing cancels out the other.
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Regime detection via a Gaussian HMM}
+\label{sec:regime-hmm}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective and conceptual framing decided before coding}
+
+Objective (b) of the project, stated from the outset, was to detect
+market regimes described as "low~/~normal~/~high."
+Before any implementation, this framing was revisited and revised.
+
+%	\textbf{Why "bubble" is not an accurate label for what this model detects.} The build-up phase of a financial bubble is often characterized by \textbf{low and stable} volatility --- a steady, discreet price appreciation is part of what makes a bubble appear "safe," and attracts more capital. It is typically the \textbf{burst}, not the bubble itself, that produces a volatility spike. A purely volatility-based model (this HMM, or the underlying GARCH) has no way to distinguish an "ordinary calm market" from a "silently forming bubble" --- both show an identical low-volatility signature. Labeling a detected low-volatility state as "no bubble" and a high-volatility state as "bubble" would be an unwarranted conflation of two distinct economic concepts: a volatility regime (directly measurable here) and a valuation regime (would require a measure of price deviation from fundamentals, outside the scope of this project).
+
+%	\textbf{Decision:} states are labeled according to what the model
+%	actually measures --- \textbf{"low volatility" /
+	%		"normal volatility" / "high volatility
+	%		(stress~/~panic)"} --- not "normal~/~bubble~/~panic".
+%	This revises the original framing from the introduction for accuracy,
+%	rather than assuming the initial wording was correct once
+%	implementation raised the question.
+
+\subsection{Input variable and transformation}
+
+\textbf{Input:} $\sigma(t)$, the conditional volatility of the
+GARCH(1,1) (Student's~$t$ specification, section~\ref{sec:garch}) ---
+the level, not its change $\Delta Y(t)$, consistent with the
+finding in section~\ref{sec:magnitude} that the level carries
+noticeably more explanatory information than the log change.
+
+\textbf{Transformation applied:} $\log(\sigma(t))$, not raw
+$\sigma(t)$. This is a \textbf{level} transformation (monotone, preserves
+order) --- not to be confused with \\ $\Delta Y(t) =
+\ln(\sigma(t)/\sigma(t-1))$, which is a \textbf{change} (a
+genuinely different quantity). The log transform is applied
+because \texttt{GaussianHMM} assumes each hidden state generates
+approximately normally distributed observations; $\sigma(t)$
+is strictly positive and likely right-skewed in its
+raw form, a poor fit to this assumption --- the same
+reasoning already applied when moving from EUR/USD's raw price
+level to log returns (\S\ref{sec:spec-iterations}).
+
+
+
+\subsection{Results}
+
+\textbf{Convergence check:} 8 of 10 restarts converge
+to the identical log-likelihood (3302.55) --- strong evidence that this
+is the \textbf{global optimum}, not a new local optimum. %This resolves the previous section's issue --- it was mainly an initialization problem, not a fundamental inadequacy of a Gaussian HMM for this series (the structural concern above still bears keeping in mind for future extensions, but did not materialize as a blocking problem here).
+
+\begin{table}[H]
+	\centering
+	\caption{Regime summary}
+	\begin{tabular}{llrrrr}
+		\toprule
+		State & Label & Mean($\log\sigma$) & Std. dev. & Frequency & Approx. $\sigma$ \\
+		\midrule
+		0 & Low volatility & $-1{,}0725$ & 0.1268 & $29{,}0\,\%$ & 0.342 \\
+		1 & Normal volatility & $-0{,}7476$ & 0.0885 & $38{,}1\,\%$ & 0.474 \\
+		2 & High volatility (stress~/~panic) & $-0{,}3907$ & 0.1081 & $32{,}9\,\%$ & 0.677 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+The three states are now clearly separated (means
+$-1{,}07$~/~$-0{,}75$~/~$-0{,}39$, non-overlapping given
+their standard deviations), the opposite of the first degenerate
+attempt.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{01_sigma_by_regime_fullsample.png}
+	\caption{$\sigma(t)$ by regime, full sample --- the classification the table above describes in figures.}
+	\label{fig:sigma-by-regime}
+\end{figure}
+
+\textbf{Transition matrix and implied regime persistence.}
+The diagonal (staying in the same regime) is very high for the
+low- and high-volatility states (0.9921 and 0.9910), consistent
+with genuine persistence rather than daily noise. Using the
+standard expected regime-duration formula, $1/(1-p_{\text{stay}})$:
+
+\vspace{0.3cm}
+
+\begin{itemize}
+	\item \textbf{Low volatility:} $1/(1-0{,}9921) \approx
+	\mathbf{127}$ trading days ($\approx$~6 months)
+	\item \textbf{High volatility (stress~/~panic):}
+	$1/(1-0{,}9910) \approx \mathbf{111}$ days ($\approx$~5 months)
+	\item \textbf{Normal volatility} ($p_{\text{stay}} \approx 0{,}9861$):
+	$1/(1-0{,}9861) \approx \mathbf{72}$ days ($\approx$~3.5 months)
+\end{itemize}
+
+\vspace{0.3cm}
+
+These durations are of the same order of magnitude as some of the
+half-lives found in section~\ref{sec:garch-stability} (e.g.\ Periods 1, 4, 5 in
+the 65--80-day range) --- an approximate, but sensible,
+consistency check between the two independent analyses, without
+constituting a formal validation.
+
+\vspace{0.2cm}
+
+\textbf{Most recent observations.} The last 10 trading
+days of the sample (2026-08-28 to 2026-09-11) are all classified as
+"low volatility" --- a stable, single-regime segment, not
+a daily flip-flop as in the first (degenerate) attempt.
+
+\newpage
+
+\subsection{Why Gaussian emissions here, despite the Student's $t$ preference for the GARCH itself}
+
+\textbf{They model different objects.} The GARCH's
+Student's~$t$ choice concerns the distribution of return
+innovations $z(t)$, which show genuine fat tails (empirical excess
+kurtosis $\approx 1{,}83$, section~\ref{sec:garch}). This HMM instead
+models $\log(\sigma(t))$ \textbf{conditional on a regime}.
+Once observations are split by regime, the residual
+distribution \emph{within} a single regime can be reasonably
+close to Gaussian --- because genuine extreme events are
+absorbed by the \textbf{regime-switching structure itself}
+(they are assigned to the "high volatility" state) rather than
+remaining outliers within a single state's distribution. A
+mixture of several Gaussians (one per regime) can
+collectively reproduce a fat-tailed \emph{overall}
+distribution even if each individual component is Gaussian --- the
+fat tail is captured by the regime structure, not by
+within-regime kurtosis.
+
+\textbf{A practical constraint, also stated plainly:}
+\texttt{hmmlearn}, the library used here, does not natively
+support Student's~$t$ emissions --- only Gaussian or a
+Gaussian mixture (\texttt{GMMHMM}). Implementing
+Student's~$t$ emissions would require a different, less mature
+library (e.g.\ \texttt{pomegranate}) or a custom-coded HMM, a
+level of complexity judged disproportionate here given that the
+results above show the Gaussian specification converges cleanly and produces
+well-separated, persistent regimes.
+
+\subsection{What these results mean economically}
+
+\begin{econbox}
+	
+	The market does not spend most of its time in a single "normal" state.
+	Over 2010--2026, the sample splits roughly into
+	$29\,\%$ low volatility, $38\,\%$ normal volatility, $33\,\%$
+	high volatility. In other words, the EUR/USD market spends about
+	\textbf{one third of all trading days} in a
+	stress~/~panic-level volatility regime --- this is not a rare
+	tail event confined to a few weeks of crisis; it is a
+	recurring state, roughly one day in three, over a 16-year span.
+	Economically, this cuts against a framing in which "panic"
+	would be treated as an exceptional, fleeting deviation from a
+	normal baseline --- here, it is closer to a third mode of
+	operation that the market regularly passes through (wars, central bank
+	shocks, COVID, inflation shocks, etc., recurring roughly
+	every few years in this sample).
+\end{econbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{04_regime_frequency.png}
+	\caption{Frequency of the three regimes over 2010--2026 --- 29\,\% / 38\,\% / 33\,\%.}
+	\label{fig:regime-frequency}
+\end{figure}
+
+\vspace{0.9cm}
+
+\begin{econbox}
+	Regimes evolve slowly; this is not daily noise.
+	
+	The implied durations (previous section) --- $\approx 127$~days
+	low vol., $\approx 111$~days high vol., $\approx 72$~days
+	normal --- mean, in economic terms, that \textbf{once
+		EUR/USD enters a volatility regime, it tends to stay there
+		for several months}, not days or weeks. This matters
+	operationally: a regime signal from this model is not
+	a short-term trading trigger --- it is closer to a
+	medium-term risk-posture indicator (useful, for instance,
+	for sizing positions or a hedging policy over a
+	quarter, not for daily decisions).
+\end{econbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{06_regime_implied_duration.png}
+	\caption{Average implied duration of each regime --- 72 to 127 trading days depending on the regime.}
+	\label{fig:regime-duration}
+\end{figure}
+
+\vspace{0.9cm}
+\begin{center}
+	\begin{econbox} [What the "current" classification means in practice]
+		
+		At the end of the sample (2026-09-11), the model classifies the market
+		as being in a \textbf{low volatility} regime, and --- according to the
+		transition matrix --- regimes of this type persist, on
+		average, more than 4 months once entered. In plain terms: based on
+		this signal alone, the market has recently been calm and,
+		historically, calm regimes tend to persist rather than reverse
+		abruptly. This is explicitly \textbf{not} a
+		forecast that the market will remain calm (the model has no
+		crystal ball on the \emph{timing} of the next regime
+		change), and it says nothing about the future
+		direction of EUR/USD (cf.\ the direction~/~magnitude
+		distinction, section~\ref{sec:magnitude}) --- only
+		that, historically, the current regime type does not tend to flip
+		overnight.
+	\end{econbox}
+	
+\end{center}
+
+\newpage
+
+\subsection{Known limitations}
+
+\begin{limitbox}
+	\begin{itemize}
+		\item \textbf{Inherited GARCH instability} (documented in
+		section~\ref{sec:garch-stability}): the $\sigma(t)$ used as
+		input here comes from a single GARCH fit on the full
+		2010--2026 sample, already shown to have persistence
+		that varies between sub-periods (though not statistically
+		established, \S\ref{sec:garch-stability}). The regimes
+		detected by this HMM may partly reflect this
+		averaging artifact rather than purely genuine market regime
+		shifts. This is the documented justification for treating this HMM as a
+		first-approximation approach, with a Markov-Switching
+		GARCH (re-estimating GARCH parameters by regime, directly
+		addressing the instability) flagged as a possible refinement
+		(section~\ref{sec:msgarch}).
+		\item \textbf{"High volatility" is not "bubble"}
+		--- this limitation is structural to any purely
+		volatility-based regime model, not specific to this
+		implementation, and should not be silently reinterpreted
+		as such in a later summary of the project.
+		\item Regime labels and boundaries depend on the arbitrary but
+		standard choice $n\_states=3$; not tested against 2 or 4
+		states as alternatives at this stage.
+	\end{itemize}
+\end{limitbox}
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Markov-Switching GARCH ($K=2$)}
+\label{sec:msgarch}
+% ═════════════════════════════════════════════════════════════════
+
+This model is motivated by the sub-period variation in
+persistence reported in section~\ref{sec:garch-stability} (variation in the
+point estimates; that section's formal likelihood-ratio test does
+not establish instability, $p=0{,}277$) and addresses it
+more directly than the "HMM on a fixed GARCH" approach of
+section~\ref{sec:regime-hmm}.
+
+\subsection{Why R, not Python --- a documented and \\deliberate exception}
+
+Every previous step of this project was implemented in Python
+(\texttt{arch} for the GARCH, \texttt{hmmlearn} for the HMM). The
+Markov-Switching GARCH is different: no comparably
+mature Python package exists. The standard reference is the R package
+"\textbf{MSGARCH}"
+\citep{ardia2019}, built in C++/Rcpp.
+
+This is not merely a lack of tooling. Estimating a true
+MS-GARCH faces a genuine theoretical difficulty, documented since
+\citet{hamiltonsusmel1994}: in the fully general model, the
+conditional variance of a given regime depends, in principle, on
+the entire history of regime paths since the start of the series
+(because $\sigma^2(t)$ depends on $\sigma^2(t-1)$, itself depending on
+the active regime at $t-1$, and so on) --- making the exact
+likelihood of this fully general model intractable beyond a
+handful of observations, since it requires summing over an
+exponentially growing number of regime paths.
+
+Two different responses exist in the literature.
+\citet{gray1996} keeps the fully general model and makes it
+\emph{tractable by approximating it}: at each step, the $k$
+regime-conditional variances are collapsed into a single
+expected variance (weighted by filtered regime probabilities),
+used as a common lagged-variance input going forward --- a genuine
+approximation of the fully general model's likelihood.
+
+The MSGARCH we implemented does not do this. It implements the \\specification of
+\citet{haasmittnikpaolella2004}, which \emph{sidesteps} the
+path-dependency problem rather than approximating it: each regime
+$k$ runs its own self-contained GARCH(1,1) recursion
+($\sigma_k^2(t) = \omega_k + \alpha_k\, r(t-1)^2 + \beta_k\,
+\sigma_k^2(t-1)$), fed by the same observed return but its
+own lagged variance --- no cross-regime collapsing at any
+step. The density of the observed return is then the $K$-regime
+mixture of these $K$ parallel processes, weighted by
+regime probabilities. This gives an \emph{exact} likelihood
+for this (more restricted) model --- it is not an approximation in
+Gray's sense. The real cost is different: each regime's
+path ignores the history of the regime that was \emph{actually}
+realized at each past date --- a simplification relative to
+the fully general model, but not the same type of approximation as
+Gray's collapsing.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{02_conditional_volatility_by_regime.png}
+	\caption{$\sigma(t)$ by regime, full sample --- two independent recursions, never mixed.}
+	\label{fig:cond-vol-by-regime}
+\end{figure}
+
+Given this, and the availability of R, this step was carried out
+as a \textbf{single, deliberate, documented exception} to an
+otherwise all-Python project: an R script (\texttt{ms\_garch.R})
+run directly (not via \texttt{rpy2}, to avoid the overhead of a
+Python-R bridge for a one-off analysis), producing CSV outputs
+reloaded into the Python project for further work.
+
+\subsection{Choice of $K=2$, not $K=3$}
+
+The HMM in section~\ref{sec:regime-hmm} used 3 states
+(low~/~normal~/~high volatility). This step deliberately
+uses \textbf{$K=2$}, not 3, for a stated, not
+arbitrary, reason: estimating an MS-GARCH is substantially more
+numerically difficult than fitting a Gaussian HMM on an
+already-computed scalar series ($\sigma(t)$) --- it must jointly
+estimate $\omega, \alpha, \beta$ \textbf{by regime}, plus the
+transition matrix, under the parallel-regime specification of
+Haas et al.\ (2004a) \citet{haasmittnikpaolella2004} described above. Each additional regime
+multiplies this difficulty. 
+
+The FX~/~equity MS-GARCH literature
+(e.g.\ \citet{klaassen2002}; \citet{marcucci2005}) usually
+starts with 2 regimes before considering more. This is a
+genuine methodological difference from the HMM, not an
+inconsistency --- the two tools face different numerical
+constraints.
+
+\newpage
+
+\subsection{Specification and errors encountered}
+
+\textbf{Model specification.} 2 regimes, each a GARCH(1,1)
+("sGARCH") with Student's~$t$ innovations ("std") ---
+matching the single-regime specification already validated
+(section~\ref{sec:garch}), with one difference: no mean
+equation is estimated here (returns are treated as zero-mean),
+whereas the single-regime \texttt{arch} fit estimates a
+constant mean $\mu$.
+
+
+
+\subsection{Results}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Fitted parameters, MS-GARCH ($K=2$)}
+	\begin{tabular}{lrrrl}
+		\toprule
+		& Estimate & Std. err. & $t$ & $\Pr(>|t|)$ \\
+		\midrule
+		$\omega_1$ (Regime 1) & 0.0001241 & 0.0002112 & 0.587 & 0.278 \\
+		$\alpha_1$ (Regime 1) & 0.0106220 & 0.0077169 & 1.376 & 0.084 \\
+		$\beta_1$ (Regime 1) & 0.9864591 & 0.0013367 & 737.970 & $<10^{-16}$ \\
+		$\nu_1$ & 7.0711 & 0.9083 & 7.785 & $<10^{-14}$ \\
+		$\omega_2$ (Regime 2) & 0.0057432 & 0.0039894 & 1.440 & 0.075 \\
+		$\alpha_2$ (Regime 2) & 0.0090000 & 0.0132647 & 0.678 & 0.249 \\
+		$\beta_2$ (Regime 2) & 0.9802132 & 0.0083909 & 116.818 & $<10^{-16}$ \\
+		$\nu_2$ & 22.0046 & 16.8510 & 1.306 & 0.096 (imprecise) \\
+		$P_{1\to1}$ & 0.99753 & 0.00311 & 320.741 & $<10^{-16}$ \\
+		$P_{2\to1}$ & 0.00627 & 0.00130 & 4.809 & $<10^{-6}$ \\
+		\midrule
+		\multicolumn{5}{l}{LL $=-2806{,}64$ ; AIC $=5633{,}27$ ; BIC $=5696{,}64$} \\
+		\multicolumn{5}{l}{Stable probabilities: Regime~1 $=71{,}7\,\%$, Regime~2 $=28{,}3\,\%$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+The model has 10 free parameters (four per regime, plus the two
+free transition probabilities). The full transition matrix:
+
+\vspace{0.3cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Transition matrix}
+	\begin{tabular}{lrr}
+		\toprule
+		From \textbackslash{} To & Regime~1 & Regime~2 \\
+		\midrule
+		Regime~1 & 0.99753 & 0.00247 \\
+		Regime~2 & 0.00627 & \textbf{0.99373} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+\textbf{Which regime is "high volatility"?} Long-run
+(unconditional) variance by regime, $\omega/(1-\alpha-\beta)$
+
+\begin{table}[H]
+	\centering
+	\caption{Persistence and long-run $\sigma$ by regime}
+	\begin{tabular}{lrrr}
+		\toprule
+		Regime & $\alpha+\beta$ & Half-life (within-regime persistence) & Implied long-run $\sigma$ \\
+		\midrule
+		1 & 0.9971 & 237.1 days & 0.206 \\
+		2 & 0.9892 & 63.9 days & 0.730 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+\textbf{Regime~2 is the high-volatility regime}, occurring
+$28{,}3\,\%$ of the time: on days when its smoothed probability exceeds
+$50\,\%$ (1,080 days), the realized daily standard deviation of
+returns is $0{,}70$, versus $0{,}44$ on the remaining 3,095
+days --- a ratio of $1{,}6$ (the classification is itself based
+on volatility, so this is an indicative ratio, not an
+independent test). The implied long-run $\sigma$ from the parameters
+($0{,}73$ vs $0{,}21$, ratio of $3{,}5$) is a much
+wider, much less precise figure: $\omega$ is not significant in either
+regime ($p=0{,}278$ and $0{,}075$) and $\alpha+\beta$ is close to
+1, so the denominator $1-\alpha-\beta$ is small ($0{,}0029$
+and $0{,}0108$) and poorly determined. It should not be read as a
+measure of realized volatility.
+
+\vspace{0.3cm}
+
+\begin{limitbox}
+	The HMM in section~\ref{sec:regime-hmm} has three states, so
+	its "high volatility" state ($32{,}9\,\%$ of the time) and this
+	model's Regime~2 do not partition the sample the same
+	way: the closeness of $32{,}9\,\%$ and $28{,}3\,\%$ should be read
+	as order-of-magnitude consistency, not as an
+	independent confirmation.
+\end{limitbox}
+
+\vspace{0.3cm} 
+
+\subsubsection{A counter-intuitive finding --- suggestive, not established}
+
+In the point estimates, the high-volatility regime has
+\textbf{lower} GARCH persistence ($\alpha+\beta=0{,}989$, half-life
+63.9 days) than the low-volatility regime ($\alpha+\beta=0{,}997$,
+half-life 237.1 days). In plain terms, the point estimates say that
+\textbf{acute stress fades faster than calm periods last}.
+
+\vspace{0.6cm}
+
+\begin{limitbox}
+	This should be read as suggestive, not as an established result.
+	The $\alpha+\beta$ gap is 0.0079. Using the standard errors
+	above and ignoring the covariance between $\alpha$ and $\beta$
+	within each regime (not saved with the estimates),
+	the standard error of this gap is about 0.018, giving $t \approx
+	0{,}45$. The covariances would refine this figure, but nothing here
+	supports a statistically significant difference. Moreover, a
+	half-life $\ln(0{,}5)/\ln(\alpha+\beta)$ is extremely sensitive
+	when $\alpha+\beta$ is this close to 1 (see the Period~2
+	diagnosis, \S\ref{sec:garch-stability-p2}).
+\end{limitbox}
+
+If the gap is real, it makes economic sense --- a crisis
+shock (e.g.\ a central bank surprise, a liquidity panic) is
+intense but tends to fade within a few months, whereas a
+calm regime, once established, can persist for almost a full year before
+the next disturbance.
+
+\newpage
+
+\textbf{Important distinction, easy to conflate:} this
+within-regime half-life (how fast GARCH shocks dissipate \emph{within}
+a regime) is a different concept from the Markov chain's own
+regime duration (how long the market \emph{stays} in a
+given regime before switching). Using
+$1/(1-P)$ with the transition matrix above, the implied
+Markov regime durations (in trading days) are:
+
+\vspace{0.2cm}
+
+\begin{itemize}
+	\item Regime~1 (low vol.): $1/(1-0{,}99753) \approx \mathbf{404}$ trading days
+	\item Regime~2 (high vol.): $1/(1-0{,}99373) \approx \mathbf{160}$ trading days
+\end{itemize}
+
+Both regime \emph{durations} are longer than their respective
+\emph{within-regime half-lives} --- expected, since a regime
+can persist long after most of a given shock's direct effect
+has already dissipated within it.
+
+\begin{limitbox}
+	$\nu_2 = 22{,}0$ ($p=0{,}096$, not significant at 5\,\%) is much
+	higher than Regime~1's $\nu_1 = 7{,}07$ (strongly significant)
+	--- implying near-Gaussian tails in the high-volatility
+	regime, versus fat tails in the low-volatility
+	regime. This is plausible (the regime split could
+	itself absorb some of the extreme events that drove the
+	single-regime model's fat tails, similar to the mechanism discussed
+	for the HMM's Gaussian emissions,
+	\S\ref{sec:regime-hmm}) but the large standard error ($16{,}85$)
+	means this specific estimate should not be treated
+	as precise --- likely a consequence of Regime~2 containing
+	fewer observations ($\approx 28\,\%$ of 4,175 $\approx 1,183$
+	days) than Regime~1. A naive $95\,\%$ Wald interval
+	would give roughly $[-11, 55]$, but is not meaningful here: $\nu$
+	is a bounded parameter (must exceed 2 for the variance to exist),
+	and the Wald construction --- symmetric around the point
+	estimate, assuming approximate normality --- respects
+	neither this bound nor the typically skewed sampling
+	distribution nearby. The negative lower bound should never
+	be cited or interpreted.
+\end{limitbox}
+
+\subsection{Comparison with the single-regime GARCH}
+
+\begin{table}[H]
+	\centering
+	\caption{MS-GARCH ($K=2$) vs single-regime GARCH comparison}
+	\begin{tabular}{lrr}
+		\toprule
+		& Single regime (Student's $t$) & MS-GARCH ($K=2$) \\
+		\midrule
+		Free parameters & 5 ($\mu, \omega, \alpha, \beta, \nu$) & 10 \\
+		Log-likelihood & $-2818{,}39$ & $-2806{,}64$ ($+11{,}75$) \\
+		AIC & 5646.78 & \textbf{5633.27} ($-13{,}51$, favors MS-GARCH) \\
+		BIC & 5678.46 & \textbf{5696.64} ($+18{,}18$, favors single regime) \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{03_msgarch_vs_single_regime.png}
+	\caption{MS-GARCH vs simple GARCH --- the smoothing the MS-GARCH provides.}
+	\label{fig:msgarch-vs-single}
+\end{figure}
+
+\vspace{0.3cm}
+
+\textbf{AIC and BIC disagree} --- a common and expected result
+when comparing a regime-switching model to its single-regime
+counterpart: AIC penalizes extra parameters less severely
+than BIC, and the MS-GARCH adds 5 parameters relative to the
+single-regime model (10 vs 5; the single-regime fit
+also estimates a constant mean that the MS-GARCH
+specification does not estimate). This is reported as such, a genuine
+ambiguity, not resolved in favor of either model --- the honest
+conclusion is that \textbf{the MS-GARCH's added complexity buys a
+	real but modest fit improvement, at a parameter cost
+	that BIC judges not worthwhile, while AIC judges it
+	worthwhile}. Neither
+criterion is "more correct" in general; this is a
+known, unresolved tension in model selection between AIC
+(better for prediction-oriented use) and BIC (better for
+parsimony~/~true-model-identification-oriented use). The raw gap
+between the two criteria is small in absolute terms at this
+scale ($\approx 5,600$); a plot of the gap directly
+($\Delta$AIC $=-13{,}51$, $\Delta$BIC $=+18{,}18$) rather than raw
+bars is in the appendix (Figure~\ref{fig:annex-info-criteria-delta}).
+
+\newpage
+
+\subsection{Case study: does the model detect the COVID-19 shock (March 2020)?}
+
+This check was carried out specifically because an initial
+look at the annual regime classifications (via the Viterbi
+path, the most likely regime per day) showed 2020 spending
+only 36 of 250 trading days ($\approx 14\,\%$) in the high-volatility
+regime --- surprisingly low compared to 2010 ($100\,\%$ of days) and
+2011 ($81$--$84\,\%$), years of the euro-area debt crisis, and 2022
+($80$--$84\,\%$). This was investigated rather than assumed to be
+either a genuine economic finding or a model flaw.
+
+\vspace{0.3cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Smoothed probability of the high-volatility regime, around the shock}
+	\begin{tabular}{lr}
+		\toprule
+		Date & $P(\text{high-vol. regime})$ \\
+		\midrule
+		2020-02-18 & $9{,}2\,\%$ \\
+		2020-02-25 & $56{,}8\,\%$ \\
+		2020-02-26 & $91{,}5\,\%$ \\
+		2020-02-28 & $99{,}4\,\%$ \\
+		2020-03-11 & \textbf{$99{,}998\,\%$} \\
+		2020-03-19 & $98{,}4\,\%$ \\
+		2020-04-01 & $77{,}6\,\%$ \\
+		2020-04-17 & $25{,}4\,\%$ \\
+		2020-04-30 & $14{,}9\,\%$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{06_covid_detection_zoom.png}
+	\caption{Trajectory of the smoothed stress-regime probability around the COVID shock --- the table's 9 milestone dates, visualized.}
+	\label{fig:covid-detection-zoom}
+\end{figure}
+
+\newpage
+
+\textbf{In hindsight, the model identifies the shock clearly and
+	quickly} --- the probability rises from $9\,\%$ to over $99\,\%$ in
+about three weeks (February~18 -- March~11), tracking exactly the
+actual COVID market panic, then declines over the following
+six weeks.
+
+\vspace{0.6cm}
+
+\begin{limitbox}
+	\textbf{These are smoothed probabilities, not a real-time signal.}
+	The value shown for a given day uses observations
+	up to the end of the sample, including the days that followed. The
+	table describes \emph{when} the regime switched, not what a
+	user would have known on that day. Real-time behavior is
+	measured in section~\ref{sec:covid}, with a model estimated on data
+	strictly prior to 2020: the predicted probability of the
+	stress regime at forecast time was $0{,}3\,\%$ on February 21 and 27,
+	$2{,}5\,\%$ on March 2, $49{,}3\,\%$ on March 6, and $98{,}7\,\%$
+	on March 12. This is not the same model or the same quantity (predicted,
+	not smoothed), so the two series are not strictly
+	comparable, but a lag of about one to two weeks relative
+	to the smoothed trajectory above is the order of magnitude
+	relevant for an operational user.
+\end{limitbox}
+
+\vspace{0.3cm}
+
+\textbf{Why the annual Viterbi count was misleading.} The
+Viterbi path only records which regime has the
+\emph{highest} probability on a given day (a binary $>50\,\%$
+threshold), reducing a smooth, informative probability
+trajectory to a crude yes~/~no label. The high-probability window here (February~25
+-- April~9, 33 consecutive trading days above $50\,\%$) is
+close to the 36-day count found --- the annual count was
+not wrong, but it \textbf{discards the shape of the transition}: a
+genuinely fast, extreme spike ($9\,\%\to99{,}998\,\%$ in three
+weeks) looks statistically identical, in a simple daily
+count, to a slower, weaker spike that crosses $50\,\%$
+for a similar number of days. 
+\vspace{0.2cm}
+\textbf{Interpretive lesson,
+	documented here rather than left implicit}: comparing regimes by
+days-per-year count is too coarse a measure to judge the
+relative intensity of a shock; the smoothed probability
+trajectory (peak level, transition speed) is the economically
+meaningful signal, and the Viterbi~/~daily-count view should be treated
+as a simplification, not a substitute.
+
+\vspace{0.3cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{05_annual_regime_share.png}
+	\caption{Annual stress-regime share, under three definitions (Viterbi, smoothed $>50\,\%$, average probability) --- resolves the 39--100\,\% gap that the initial screening left open.}
+	\label{fig:annual-regime-share}
+\end{figure}
+
+\subsection{Economic interpretation}
+
+\begin{econbox}
+	\begin{itemize}
+		\item EUR/USD alternates between two distinct volatility
+		regimes: a \textbf{calm regime} (realized daily
+		volatility $\approx 0{,}44$ on days when it dominates, occurring
+		$\approx 72\,\%$ of the time, lasting on average about
+		404 trading days, or $\approx$~1.6 years, once entered) and
+		a \textbf{stress regime} ($\approx 0{,}70$ on days when it
+		dominates --- about 1.6 times more volatile --- occurring
+		$\approx 28\,\%$ of the time, lasting on average about
+		160 trading days, or $\approx$~7--8 months). The implied
+		long-run $\sigma$ from the parameters ($0{,}21$ vs $0{,}73$)
+		overstates this gap and is imprecise.
+		\item In the point estimates, shock intensity within a
+		stress regime fades \textbf{faster} (half-life
+		$\approx 64$ days) than within a calm regime
+		($\approx 237$ days) --- stress would be acute but
+		comparatively brief at the shock level, even though the
+		\emph{regime itself} (the Markov state) can still take
+		months to fully resolve. This difference is not
+		statistically established and should be read as suggestive.
+		\item In hindsight, the model places the genuine, sudden
+		crisis (COVID, March 2020) in about three weeks, moving
+		from near-certain "calm" to near-certain
+		"stress". This is a retrospective description of the
+		moment the regime switched; as an operational
+		early-warning signal, it lagged by about one to two
+		weeks in the out-of-sample test (section~\ref{sec:covid}).
+		\item Compared with a single, undifferentiated GARCH
+		(section~\ref{sec:garch}), this model offers a genuinely
+		different, regime-aware description of volatility: it
+		explicitly answers "which of the two regimes are we in?",
+		rather than averaging the dynamics of both regimes into a single
+		fixed set of parameters. The formal test in
+		section~\ref{sec:garch-stability} did \textbf{not} establish that the
+		single-regime model's parameters are statistically
+		unstable over time (likelihood-ratio test,
+		$p=0{,}277$): the MS-GARCH's motivation rests more solidly
+		on being the theoretically appropriate tool for
+		regime-dependent dynamics and on its AIC advantage than on
+		proven instability of the simpler model --- at the acknowledged
+		cost of a heavier, harder-to-estimate model, whose
+		advantage is judged worthwhile by AIC and not by BIC.
+	\end{itemize}
+\end{econbox}
+
+\subsection{Known limitations}
+
+\begin{limitbox}
+	\begin{itemize}
+		\item MSGARCH's likelihood is exact for the (more
+		restricted) specification of \citet{haasmittnikpaolella2004} that it
+		implements --- this is not an approximation of that model. What
+		remains genuinely intractable is the fully general,
+		path-dependent MS-GARCH likelihood; MSGARCH avoids
+		this intractability by using a different, deliberately more
+		restricted model, not by approximating the
+		general model.
+		\item $\nu_2$ (regime~2's tail parameter) is imprecisely
+		estimated; should not be over-interpreted alone.
+		\item The persistence difference between the two regimes is not
+		tested; the half-lives are point estimates,
+		sensitive to $\alpha+\beta$ being close to 1.
+		\item The implied long-run $\sigma$ figures from the
+		parameters ($0{,}206$ and $0{,}730$) rely on $\omega$, not
+		significant in either regime, and on a denominator
+		$1-\alpha-\beta$ close to zero: they are imprecise, and their
+		ratio ($3{,}5$) is well above the ratio of realized
+		volatilities on days when each regime dominates ($1{,}6$).
+		\item AIC and BIC disagree on whether the added
+		complexity is justified --- this project does not settle
+		between the two criteria, reporting the disagreement rather than
+		picking a side to force a clean narrative. The two models also
+		differ in their mean specification (a constant mean
+		estimated in the single-regime fit, none here).
+		\item The regime probabilities analyzed above are smoothed
+		(\emph{ex post}). A real-time user would rely on
+		filtered or predicted probabilities, which react more
+		slowly.
+		\item \textbf{The Viterbi path used above is not produced
+			by any script currently in the project.}
+		\texttt{ms\_garch.R}, as written, only exports the
+		smoothed regime probabilities
+		(\texttt{ms\_garch\_regime\_probs.csv}) from
+		\texttt{State()}'s output; the Viterbi classification behind the
+		opening paragraph and the annual day counts was generated
+		in an interactive session and not captured in a saved
+		script. Anyone reproducing this analysis from the
+		repository alone would need to add a Viterbi path
+		extraction from \texttt{State()}'s output themselves --- not yet
+		done.
+		\item $K=2$ has not been compared to $K=3$ at this stage (see
+		the justification for starting at 2 above); a
+		natural extension, not yet undertaken.
+		\item This step depends on R and the MSGARCH package --- a
+		deliberate, documented exception to the rest of the
+		project's Python pipeline, meaning it cannot be re-run
+		purely from the Python codebase without R installed
+		alongside it.
+	\end{itemize}
+\end{limitbox}
+
+\vspace{0.4cm}
+
+\begin{limitbox}
+	\textbf{Correction made to the present write-up:} an earlier
+	version of this document flagged, at this point, the absence of a file for the
+	within-regime half-life~/~Markov regime-duration
+	distinction --- a search error in the archive, corrected after a second
+	exhaustive pass. The file exists (figure below),
+	from an earlier production batch predating the
+	post-audit corrections of this document.
+\end{limitbox}
+
+\vspace{0.4cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{03_halflife_vs_regime_duration.png}
+	\caption{Within-regime half-life (dissipation of GARCH shocks) vs regime duration in the Markov sense --- this section's subtlest distinction, accompanied by the figure rather than left to text alone.}
+	\label{fig:halflife-vs-regime-duration}
+\end{figure}
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Operational price range}
+\label{sec:price-range}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective}
+
+Produce an actual computed price range
+$[P_{\min}, P_{\max}]$ for EUR/USD, using the fitted
+MS-GARCH($K=2$) model (section~\ref{sec:msgarch}) --- not the
+illustrative made-up figures used earlier in the project to explain
+the \emph{concept} of a regime-aware range
+(sections~\ref{sec:magnitude} and~\ref{sec:regime-hmm}), but a value
+actually computed from the fitted model and the current real
+data.
+
+
+
+
+\subsection{Results}
+\label{sec:price-range-results}
+
+As of 2026-09-11 (EUR/USD $=1{,}1604$):
+
+\vspace{0.3cm}
+
+\begin{center}
+	\begin{tabular}{|p{6.7cm}|p{6.7cm}|}
+		\hline
+		Current regime probabilities & low vol. $=99{,}4\,\%$, high vol. $=0{,}6\,\%$ \\
+		\hline
+		Implied forecast volatility from the model (regime-weighted) & 0.3055 \\
+		\hline
+		\textbf{95\,\% price range} & \textbf{[1.1533~; 1.1675]} \\
+		\hline
+		Width & 0.0142 ($1{,}22\,\%$ of the current price) \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\vspace{0.3cm}
+
+\subsection{Internal consistency check}
+\label{sec:price-range-internal-check}
+
+The interval corresponds to about $\pm 2{,}0$ times the
+forecast volatility ($-2{,}011\sigma$ / $+1{,}984\sigma$). This was checked against
+the theoretical quantile of a standardized Student's~$t$
+distribution with $\nu \approx 7{,}07$ (Regime~1's tail
+parameter, which dominates the mixture given its $99{,}4\,\%$
+weight): $-1{,}998$. The close match confirms that
+\texttt{Risk()} genuinely uses the model's Student's~$t$
+predictive distribution, without silently falling back to a
+Normal approximation --- a genuine check, not an
+assumption taken for granted.
+
+At the $95\,\%$ level, this check has limited power to
+distinguish a Student's~$t$ from a Normal: the two quantiles
+differ by only $2\,\%$ ($1{,}998\sigma$ vs $1{,}960\sigma$). The
+$80\,\%$ level of the \emph{fan chart} (\S\ref{sec:price-range-fanchart})
+discriminates better: the mixture's $80\,\%$ bounds are at
+$-1{,}212\sigma$ and $+1{,}185\sigma$, about $1{,}20\sigma$ on
+average, versus $1{,}197\sigma$ for a standardized
+Student's~$t$ ($\nu \approx 7{,}07$) and $1{,}282\sigma$ for a Normal.
+
+\newpage
+
+\subsection{Rigorous result vs genuinely regime-conditional forecast}
+
+An earlier version of this document compared the operational
+range to an \emph{approximation} of what each regime would
+imply (using each regime's long-run volatility level and the
+mixture's quantile multiplier, not a genuine one-step
+forecast). This has since been replaced: section~\ref{sec:msgarch}
+was corrected to recognize that MSGARCH's
+regime-switching option implements
+\citet{haasmittnikpaolella2004}, not \citet{gray1996} --- which
+means the conditional-variance recursion specific to each
+regime has \textbf{no} path-dependency problem and can
+be computed directly:
+
+\vspace{0.3cm}
+
+\begin{keyeq}
+	\begin{equation}
+		\sigma_k^2(t) = \omega_k + \alpha_k\, r(t-1)^2 + \beta_k\, 	\sigma_k^2(t-1),
+	\end{equation}
+\end{keyeq}
+
+run independently for each regime~$k$ on the same observed
+return series. This gives a genuine exact one-step forecast
+per regime --- not an approximation.
+
+\textbf{Validation of the manual recursion.} Before trusting
+this recursion, it was validated against the already-validated
+\texttt{Risk()} mixture result: the probability-weighted average of the
+two regimes' forecast variances,
+
+\vspace{0.3cm}
+
+\begin{center}
+	
+	$\sqrt{w_1\sigma_1^2(t+1) + w_2\sigma_2^2(t+1)}$
+	
+\end{center}
+
+\vspace{0.3cm}
+gives
+\textbf{0.3055} --- exactly matching the mixture
+volatility forecast reported by \texttt{Risk()} (\textbf{0.3055}).
+This independent match confirms the manual recursion
+is correct, rather than relying on the formula simply
+being "plausible."
+
+\vspace{0.3cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Genuinely regime-conditional 95\,\% ranges}
+	\begin{tabular}{lrrr}
+		\toprule
+		& Forecast volatility $\sigma_k(t+1)$ & 95\,\% range & Width \\
+		\midrule
+		Regime~1 (calm) & 0.3033 & [1.1534~; 1.1675] & $1{,}21\,\%$ \\
+		Regime~2 (stress) & 0.5769 & [1.1472~; 1.1737] & $2{,}28\,\%$ \\
+		\textbf{Mixture (operational)} & 0.3055 & \textbf{[1.1533~; 1.1675]} & \textbf{$1{,}22\,\%$} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+The stress regime's range is genuinely (not approximately)
+\textbf{1.88 times wider} than the calm regime's --- a
+direct consequence of Regime~2's own one-step volatility
+being almost double Regime~1's ($0{,}577$ vs
+$0{,}303$, a ratio of $1{,}90$). The tail shape plays only a
+minor role, and in the opposite direction: Regime~2's tail is
+\emph{lighter} ($\nu_2 \approx 22$, closer to Normal than
+expected, section~\ref{sec:msgarch}) than Regime~1's
+($\nu_1 \approx 7$), which very slightly reduces the ratio at the
+$95\,\%$ level ($1{,}88$ vs a volatility ratio of $1{,}90$).
+
+\vspace{0.3cm}
+
+\begin{limitbox}
+	The $95\,\%$ interval reported by \texttt{Risk()} for the mixture
+	($-0{,}6143$ / $+0{,}6061$) is very slightly asymmetric, even
+	though the model has no mean term at all (\texttt{MSGARCH}
+	assumes zero mean everywhere) and each individual per-regime
+	Student's~$t$ distribution is exactly symmetric
+	around zero. A mixture of two symmetric distributions centered
+	at zero is itself theoretically symmetric, and its exact
+	$95\,\%$ quantiles, computed from the published parameters and
+	current regime weights, are $\pm 0{,}611$. The reported
+	bounds deviate from this value by less than $1\,\%$, and the
+	deviation is systematic rather than random: at every
+	\emph{fan chart} confidence level, the midpoint of the lower
+	and upper bounds is the same, $-0{,}0041$, and each bound reported by
+	\texttt{Risk()} sits on a regular numerical grid with step
+	$\approx 0{,}0068$ percentage points of return. The asymmetry is
+	therefore a grid effect of \texttt{Risk()}'s numerical computation --- not
+	Monte Carlo noise, and not a property of the model. It is
+	negligible for the price range ($\approx 0{,}00005$ in price).
+\end{limitbox}
+
+
+\vspace{0.3cm}
+
+This is no longer a cosmetic improvement over the earlier
+approximation: the genuine regime-conditional ranges are
+computed with the same rigor as the operational mixture range,
+using each regime's own parameters and its own
+tail shape --- not borrowed multipliers or long-run
+levels. This makes the regime comparison itself
+a legitimate, citable result, not a mere illustrative aside.
+
+\newpage
+
+\subsection{What "next trading day" really means --- a clarification that avoids a false failure}
+
+\begin{limitbox}
+	\texttt{nahead = 1} means one step forward \textbf{within the
+		series of trading days used to fit the model}, not literally
+	"24 hours from now." The last observation used was
+	\textbf{Friday 2026-09-11}; reference FX series like
+	FRED's \texttt{DEXUSEU} have no observation on
+	weekends. The range above is therefore a forecast for the
+	\textbf{next available trading-day observation} --- here,
+	\textbf{Monday 2026-09-14} --- not Saturday.
+	
+	\textbf{An additional, more substantial caveat}: the actual FX
+	market trades continuously from Sunday evening to Friday
+	evening (New York time), unlike the single daily
+	\texttt{DEXUSEU} reference rate (a New York noon rate) on
+	which the model was calibrated. A whole weekend of news
+	(central bank comments, geopolitical events) can occur between
+	Friday's close and Monday's reopening, which the model has
+	\textbf{never observed as a distinct event} --- it was
+	calibrated purely on day-to-day changes in this
+	reference rate, with no explicit "weekend gap"
+	component. In practice: a Monday's actual move
+	could fall outside the $95\,\%$ range more often than an
+	"average" weekday, purely because weekends can carry
+	more unobserved information than a simple weekday
+	gap. This is a known limitation of daily-close
+	GARCH-family models applied to FX, not a flaw specific
+	to this implementation --- but it should be stated
+	explicitly rather than left for a reader to discover by
+	observing the model "fail" on a Monday that, in fact,
+	behaved exactly as a model blind to weekend news
+	would be expected to.
+\end{limitbox}
+
+\newpage
+
+\subsection{Economic interpretation}
+
+\begin{econbox}[Illustrative example]
+	\textbf{A wide $1{,}22\,\%$ range over a single day is a
+		real, actionable figure, not an abstraction.} For a
+	firm converting a 1,000,000~EUR invoice into USD, the
+	range $[1{,}1533~;~1{,}1675]$ implies the dollar proceeds
+	could plausibly fall anywhere between about
+	\$1,153,300 and \$1,167,500 --- a gap of more than \$14,000 due to
+	exchange-rate uncertainty alone over a single day, before any
+	other business risk. This is the kind of figure a treasury or
+	finance function would use to size a hedge, not
+	a mere academic quantity.
+	
+	\textbf{The width of the range is not fixed --- it
+		"breathes" with the regime}, which is the whole
+	operational point of this project. As of this date, the model assigns
+	$99{,}4\,\%$ probability to the calm regime, so the
+	operational range is close to its calm-regime width.
+	Using the exact regime-conditional ranges above, the same
+	1,000,000~EUR conversion directly illustrates the
+	difference:
+	\begin{itemize}
+		\item \textbf{If calm (certain):} $[1{,}1534~;~1{,}1675]$ $\to$
+		proceeds between \$1,153,400 and \$1,167,500 --- a gap of
+		\$14,100, almost identical to the operational range, since
+		the model is currently near-certain the market is calm.
+		\item \textbf{If stress (certain):} $[1{,}1472~;~1{,}1737]$ $\to$
+		proceeds between \$1,147,200 and \$1,173,700 --- a
+		\textbf{gap of \$26,500}, almost double. A treasury relying
+		on a single, regime-blind volatility estimate calibrated
+		during calm periods would be under-hedged by roughly this
+		difference at the very moment the market actually shifts into
+		stress --- exactly when the hedge matters most.
+	\end{itemize}
+	
+	\textbf{What the range does NOT say:} nothing about direction. A
+	$95\,\%$ range of $[1{,}1533~;~1{,}1675]$ is symmetric
+	information about \emph{how far} EUR/USD might move, not
+	\emph{which way} --- consistent with the project's earlier
+	robust finding that direction is not predictable at this
+	horizon (sections~\ref{sec:baseline} and~\ref{sec:controls}). Anyone
+	reading this range as "the model expects EUR/USD to end up
+	somewhere here, probably in the middle" is
+	over-interpreting it: the model has no opinion on where, within the
+	range, the price will land, only that $95\,\%$ of the time, it
+	expects the actual move to fall inside. This holds
+	in both regimes: a wider stress-regime range does not mean the
+	model expects a crash more than a rally --- only a
+	wider move in one direction or the other.
+\end{econbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{05_economic_impact_eur1m.png}
+	\caption{Economic impact of a 1,000,000~EUR conversion --- \$14,100 (calm) vs \$26,500 (stress).}
+	\label{fig:economic-impact}
+\end{figure}
+
+\subsection{Ex-post comparison against actual market data \\(2026-09-14)}
+
+Independent source (Pound Sterling Live's daily EUR/USD
+history), for Monday 2026-09-14 (the next trading day after the
+2026-09-11 forecast):
+
+\begin{center}
+	\begin{tabular}{lr}
+		\toprule
+		& Value \\
+		\midrule
+		Open & 1.1597 \\
+		Close & 1.1549 \\
+		High & 1.1601 \\
+		Low & 1.1523 \\
+		\bottomrule
+	\end{tabular}
+\end{center}
+
+\vspace{0.3cm}
+
+Forecast range: \textbf{[1.1533~; 1.1675]}.
+
+
+Open, Close, and High all fall inside the
+forecast range. The \textbf{intraday Low (1.1523) falls
+	just outside the lower bound}, by 0.0010 ($\approx 0{,}086\,\%$
+of the reference price --- about ten pips).
+
+\newpage
+
+\begin{limitbox}
+	\textbf{The most relevant comparison is against the Close (1.1549),
+		not the intraday Low.} The GARCH was calibrated on the
+	daily FRED reference rate's day-to-day log returns --- it
+	was never built to predict intraday extremes
+	(the high/low spread within a single day), only
+	the day-to-day move size. Judged on that quantity, the
+	Close falls comfortably within the range: consistent with
+	the model, though only indicatively (see the sourcing caveat
+	below). The Low breaching the band is a data point
+	on a different question (intraday range) that this
+	model does not address --- worth noting, not a failure of
+	what was actually forecast.
+	
+	\textbf{Sourcing caveat:} this project's own pipeline
+	recorded the 2026-09-11 reference price as 1.1604
+	(FRED's \texttt{DEXUSEU}), while this independent source
+	reports a Close of 1.1599 for the same day --- a gap
+	of about $0{,}04\,\%$. The two are not the same
+	quantity: \texttt{DEXUSEU} is the Federal Reserve's New York
+	noon reference rate, not an end-of-day close, so the
+	model forecasts the next noon reference rate while
+	Pound Sterling Live reports the end-of-day close. The gap is
+	small on a calm day but can be much wider during
+	volatile periods (averaging $0{,}22\,\%$ between February 24 and
+	April 30, 2020, up to $1{,}14\,\%$ --- section~\ref{sec:covid}), so
+	this comparison is indicative, not exact.
+	
+	\textbf{Critical caveat: this is an observation, not a
+		validation.} A single day proves essentially nothing about
+	the model's calibration. A correctly calibrated $95\,\%$
+	interval is \emph{supposed} to be breached roughly 1 day in
+	20 --- a single result inside the range (or even outside) carries no
+	statistical weight on its own. This comparison is recorded as an
+	honest, concrete illustration of the range's performance
+	on one occasion, not as proof that the model is well or
+	poorly calibrated. A genuine calibration check would
+	require accumulating many such observations over time --- not
+	attempted here (see section~\ref{sec:rolling-test} for this
+	accumulation).
+\end{limitbox}
+
+\newpage
+
+\subsection{Fan chart: multiple confidence bands}
+\label{sec:price-range-fanchart}
+
+Extending the single $95\,\%$ range into a \emph{fan chart} of several nested confidence bands
+computed in a single \texttt{Risk()} call over the full alpha
+vector, converted into price bands.
+
+\vspace{0.3cm}
+
+\begin{table}[H]
+	\centering
+	\caption{Band widths, three panels}
+	\begin{tabular}{|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|}
+		\hline
+		Confidence level & Mixture width & Calm width & Stress width & Stress/calm ratio \\
+		\hline
+		20\,\% & 0.136\,\% & 0.135\,\% & 0.282\,\% & 2.09$\times$ \\
+		\hline
+		50\,\% & 0.366\,\% & 0.365\,\% & 0.754\,\% & 2.07$\times$ \\
+		\hline
+		80\,\% & 0.732\,\% & 0.726\,\% & 1.454\,\% & 2.00$\times$ \\
+		\hline
+		95\,\% & 1.220\,\% & 1.212\,\% & 2.282\,\% & 1.88$\times$ \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+The bands are correctly nested at every level
+($20\,\% \subset 50\,\% \subset 80\,\% \subset 95\,\%$) and widen
+faster than linearly toward the tails in all three panels,
+as a Normal distribution would too. What distinguishes the
+model is the degree: the $95\,\%$ band is about $9{,}0$ times
+wider than the $20\,\%$ band in the mixture and calm
+panels ($8{,}1$ times in the stress panel), versus $7{,}7$ times for a
+Normal distribution --- the signature of the fatter tails of the
+Student's~$t$ distribution underlying the model.
+
+\vspace{0.4cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{01_fan_chart_three_panels.png}
+	\caption{Three-panel \emph{fan chart} (operational mixture, certain calm regime, certain stress regime).}
+	\label{fig:fan-chart}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{02_width_ratio_stress_calm.png}
+	\caption{Stress~/~calm width ratio by confidence level --- from $2{,}09\times$ to $1{,}88\times$, not constant.}
+	\label{fig:width-ratio-stress-calm}
+\end{figure}
+
+\vspace{0.3cm}
+
+\subsection{Interpretation --- the calm regime, and, especially, the stress regime.}
+
+\begin{econbox}[Calm Regime]
+	The calm regime is nearly identical to the operational mixture
+	at every level (expected, since the mixture is $99{,}4\,\%$
+	calm-weighted as of this date) --- confirming that the mixture
+	range is, for all practical purposes, "the calm-regime range" at this
+	moment.
+\end{econbox} 
+
+\vspace{0.2cm}
+
+\begin{econbox}[Stress Regime: what this chart's panel shows]
+	At every confidence level, the
+	stress-regime band is \textbf{about twice as wide} as
+	the calm-regime band --- but this ratio is not constant, and
+	how it changes is itself informative. It is
+	\textbf{$2{,}09\times$, $2{,}07\times$, and $2{,}00\times$} at the
+	$20\,\%$, $50\,\%$, and $80\,\%$ levels, about $5$--$10\,\%$
+	\emph{above} the ratio of the two regimes' one-step volatility
+	forecasts ($0{,}577/0{,}303 \approx 1{,}90$), and \textbf{$1{,}88\times$} at
+	the $95\,\%$ level, essentially equal to it. If the two regimes
+	had the same distribution shape, the ratio would be constant and equal
+	to $1{,}90$; the deviations measure the effect of the different
+	shapes documented in section~\ref{sec:msgarch}. At a given variance, a
+	fat-tailed distribution places more mass near the center,
+	so the calm regime's central band is narrower than
+	a near-Normal distribution would give: at the $20\,\%$
+	level, the half-width is $0{,}223\sigma$ for the calm regime ($\nu_1
+	\approx 7$) versus $0{,}245\sigma$ for the stress regime ($\nu_2
+	\approx 22$; a Normal gives $0{,}253\sigma$). This inflates the
+	stress/calm ratio at central levels. In the extreme tail, the two
+	shapes give nearly the same multiple of $\sigma$ ($1{,}998\sigma$
+	versus $1{,}977\sigma$ at $95\,\%$), and the ratio reverts to the
+	volatility ratio. The \emph{absolute gap} between the two bands, on the
+	other hand, keeps growing with the confidence level....
+\end{econbox}
+
+
+\vspace{0.2cm}
+
+\begin{econbox}[What this means for someone reading the chart, not just the figures]
+	The stress panel is not simply "the
+	calm panel stretched by a constant factor" --- it has a
+	genuinely different shape, relatively narrower at its most
+	extreme edge than at its center, because the two regimes have
+	different distribution shapes. A reader looking only at the
+	$95\,\%$ width would actually \emph{underestimate} slightly
+	how much riskier the stress regime's central, day-to-day
+	experience is compared with the calm regime's (the $20\,\%$ and $50\,\%$
+	ratios, $\approx 2{,}1\times$, are larger than the headline $95\,\%$
+	ratio, $\approx 1{,}88\times$) --- something to bear in mind before using a simple
+	"times two" rule of thumb to reason about regime risk at
+	any horizon.
+\end{econbox}
+
+
+\subsection{Status of project objective (b)}
+
+With this step, objective (b) --- stated from the very start of the project,
+\S\ref{sec:intro} --- is now concretely delivered: an
+actual, computed, regime-aware price range, anchored in a
+validated GARCH specification (section~\ref{sec:garch}), an honestly
+labeled regime-detection layer
+(sections~\ref{sec:regime-hmm} and~\ref{sec:msgarch}), and a
+documented, verified forecasting method (this section) --- rather than the
+illustrative example used earlier in the project purely to explain the
+concept.
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Rolling chain test (September 11--17, 2026)}
+\label{sec:rolling-test}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective and design}
+
+Chain together 4 sequential one-step forecasts, each using only
+the information available up to the previous trading day:
+
+\begin{table}[H]
+	\centering
+	\caption{Rolling test design}
+	\begin{tabular}{lll}
+		\toprule
+		Forecast & History up to & Target \\
+		\midrule
+		1 & 2026-09-11 & 2026-09-14 \\
+		2 & 2026-09-14 & 2026-09-15 \\
+		3 & 2026-09-15 & 2026-09-16 \\
+		4 & 2026-09-16 & 2026-09-17 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+\textbf{The parameters are frozen} (the MS-GARCH fit from
+\texttt{ms\_garch.R}, unchanged) --- each forecast differs only
+because the return history feeding \texttt{State()} and
+\texttt{Risk()} grows by one actually observed day each time. This
+isolates exactly one question: how would the model, calibrated
+once on 2026-09-11, have tracked reality over the following
+week without being retrospectively re-fitted.
+
+\subsection{Data source workaround}
+
+A fresh FRED (\texttt{DEXUSEU}) pull turned out to still stop
+at 2026-09-11 --- the same end date as the project's
+original pull --- either a genuine publication lag or a
+query issue; unresolved at the time of writing. As a
+documented workaround, the existing FRED history was extended with
+independently sourced Close values (Pound Sterling Live) for
+2026-09-14 through 2026-09-17 --- the same source and the same gap already noted
+for 2026-09-11 (section~\ref{sec:price-range}) in the price
+range document.
+
+\subsection{Results (close to close)}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Rolling test results, close to close}
+	\begin{tabular}{|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|}
+		\hline
+		Forecast & Threshold price & Range & Width & Actual (Close) & Result & $P$(calm) & $P$(stress) \\
+		\hline
+		1 ($\to$09-14) & 1.1604 & [1.1533~; 1.1675] & 1.22\,\% & 1.1549 & \textbf{Inside} & 99.4\,\% & 0.6\,\% \\
+		\hline
+		2 ($\to$09-15) & 1.1549 & [1.1477~; 1.1620] & 1.23\,\% & 1.1542 & \textbf{Inside} & 98.9\,\% & 1.1\,\% \\
+		\hline
+		3 ($\to$09-16) & 1.1542 & [1.1471~; 1.1613] & 1.23\,\% & 1.1464 & \textbf{Outside} & 99.2\,\% & 0.8\,\% \\
+		\hline
+		4 ($\to$09-17) & 1.1464 & [1.1390~; 1.1538] & 1.29\,\% & 1.1459 & \textbf{Inside} & 97.0\,\% & 3.0\,\% \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\textbf{Raw Close-based result: 3 of 4 inside the
+	nominal $95\,\%$ interval.}
+
+\vspace{0.7cm}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{02_range_vs_actual_chain.png}
+	\caption{Forecast range vs realized price, chained across the 4 forecasts.}
+	\label{fig:range-vs-actual-chain}
+\end{figure}
+
+\textbf{Adding Open, High, Low --- a fuller, slightly less
+	favorable picture.} The model is calibrated on the
+day-to-day changes of a single daily reference rate, so the
+daily Close is the closest primary comparison. But
+checking the full daily range against each forecast
+band reveals a nuance invisible from the Close alone:
+
+\vspace{0.3cm}	
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Open, High, Low, Close against range}
+	\begin{tabular}{lllll}
+		\toprule
+		Target & Range & Open & High & Low \\
+		\midrule
+		09-14 & [1.1533~; 1.1675] & 1.1597 (inside) & 1.1601 (inside) & \textbf{1.1523 (OUTSIDE)} \\
+		09-15 & [1.1477~; 1.1620] & 1.1549 (inside) & 1.1553 (inside) & 1.1527 (inside) \\
+		09-16 & [1.1471~; 1.1613] & 1.1542 (inside) & 1.1557 (inside) & \textbf{1.1461 (OUTSIDE)} \\
+		09-17 & [1.1390~; 1.1538] & 1.1464 (inside) & 1.1473 (inside) & 1.1457 (inside) \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+
+\textbf{On the Close alone: 1 breach out of 4. Including the
+	intraday Low: 2 breaches out of 4} (09-14 and 09-16).
+The 09-14 Low (1.1523) dipped below the forecast's lower
+bound even though that day's Close came back inside by the
+end of the session. This does not change the model's validity (it was never
+built to predict intraday extremes), but it is
+a fuller picture than reporting only the Close-based
+result.
+
+
+
+\subsection{Interpretation --- corrected before writing, not after}
+
+
+\begin{limitbox}
+	\textbf{$n=4$ proves nothing about calibration --- stated
+		plainly, not softened.} 3/4 (or 2/4, including the intraday
+	Lows) inside a $95\,\%$ interval neither validates
+	nor invalidates the model's calibration. A meaningful empirical
+	coverage rate requires at minimum several dozen observations
+	before it carries statistical information. \textbf{This result is
+		a demonstration that the forecast chain works correctly
+		end to end, not proof of good (or bad) calibration.} Any
+	claim that "the model captures uncertainty well"
+	based on this alone would be an unsupported generalization
+	from a tiny sample.
+	
+	For scale: even if the $95\,\%$ interval were perfectly
+	calibrated and breaches were independent, the probability
+	of observing at least one breach in 4 days is
+	$1-0{,}95^4 \approx 18{,}5\,\%$ --- a single breach in 4 days
+	is an ordinary result.
+	
+	
+\end{limitbox}
+
+\newpage
+
+\subsubsection{The Close-based miss (forecast~3, $\to$09-16): two distinct explanations, correctly kept separate}
+
+The breach was marginal: actual $1{,}1464$ against the lower
+bound $1{,}1471$, a gap of $0{,}0007$ ($\approx 0{,}064\,\%$ of the
+price, about 7 pips) --- right at the edge, not a spectacular
+failure.
+
+Two distinct hypotheses were considered to determine whether this
+represents a genuine model shortfall:
+
+\vspace{0.2cm}
+
+\textbf{(a) Direct measurement noise on the "actual" value
+	itself.} The 09-16 forecast is compared against the close reported
+by Pound Sterling Live, whereas the model was calibrated on
+FRED data throughout its history. Since the FRED value for
+09-16 is unavailable, \textbf{it cannot be ruled out} that the
+FRED value for that day would have fallen inside the range. Over
+the calm January-February 2020 days (section~\ref{sec:covid}), the
+absolute gap between the two sources averaged $0{,}069\,\%$
+(std.\ dev.\ $0{,}088\,\%$), and 17 of those 35 days showed a gap
+larger than this breach ($0{,}064\,\%$); the one-day figure
+cited for 09-11 ($\approx 0{,}04\,\%$) is a single observation.
+Moreover, the FOMC statement on September 16 was released at 2:00~PM
+(Eastern time) --- after a noon reference rate and before an
+end-of-day close --- so a noon value that day would not
+contain the market reaction, unlike the close.
+\textbf{This remains genuinely unresolved with the available
+	data}, but the breach falls well within the range
+of gaps normally observed between the two quantities: it does not,
+on its own, point to a model failure.
+
+\vspace{0.2cm}
+
+\textbf{(b) Contamination of the GARCH recursion via the
+	one-off source switch (09-11$\to$09-14) --- a distinct,
+	quantifiable channel.} The single switch from FRED
+(09-11 $=1{,}1604$) to Pound Sterling Live (09-14 $=1{,}1549$) creates a
+"phantom" distortion in that day's computed return:
+
+\begin{center}
+	\small
+	\begin{tabular}{|p{7.8cm}|p{6.5cm}|}
+		\hline
+		Actually computed return (FRED $\to$ PSL) & $\ln(1{,}1549/1{,}1604) = -0{,}4751\,\%$ \\
+		\hline
+		True single-source return (PSL 09-11 close & \\
+		$=1{,}1599$ $\to$ PSL 09-14) & $\ln(1{,}1549/1{,}1599) = -0{,}4320\,\%$ \\
+		\hline
+		Phantom distortion & $-0{,}0431$ percentage points (larger magnitude) \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\vspace{0.3cm}	
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{canal_garch_phantom_distortion.png}
+	\caption{Flow diagram of channel (b) --- two computation paths compared side by side, $-0{,}4751\,\%$ vs $-0{,}4320\,\%$.}
+	\label{fig:garch-phantom-distortion}
+\end{figure}
+
+Because the GARCH's variance recursion uses squared past
+returns 
+
+\vspace{0.2cm}
+
+\begin{center}
+	($\sigma^2(t) = \omega + \alpha\, r^2(t-1) + \beta\,
+	\sigma^2(t-1)$)
+\end{center}
+
+\vspace{0.2cm}
+
+ a \textbf{larger}-magnitude return injects
+\textbf{more}, not less, variance into the forecast for each
+following day --- meaning this channel, if it has an effect, would have made
+forecast~3's range \textbf{wider} than an entirely
+single-source computation would have given. \textbf{This
+	channel does not explain the breach; if it has an effect, it
+	suggests the "true" single-source model might have missed by
+	slightly more, not less.}
+	
+\vspace{0.2cm}	
+
+\textbf{Conclusion:} channel~(a) remains a genuine, unresolved
+source of doubt; channel~(b) was quantitatively checked and does
+not "exonerate" the model --- it points the other way.
+
+\newpage
+
+\subsubsection{Regime responsiveness: two competing hypotheses, correctly left undecided}
+\label{sec:rolling-regime-reactivity}
+
+Regime probabilities across the chain: $P(\text{stress}) = 0{,}6\,\%
+\to 1{,}1\,\% \to 0{,}8\,\% \to \mathbf{3{,}0\,\%}$, while the
+range width barely moved ($1{,}22\,\% \to 1{,}23\,\% \to
+1{,}23\,\% \to 1{,}29\,\%$; $+5{,}6\,\%$ between the first and
+last). The model's risk sentiment rose about 5-fold
+($0{,}56\,\% \to 3{,}01\,\%$) over the week but stayed
+anchored above $97\,\%$ "calm" throughout, including
+immediately after the miss.
+
+\vspace{0.3cm}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{02_stress_probability_vs_width.png}
+	\caption{$P(\text{stress})$ and range width, indexed to base~100 --- the actual gap ($\times 5{,}3$ vs only $+5{,}6\,\%$) stays in the subtitle to avoid any misleading effect from the indexing.}
+	\label{fig:stress-prob-vs-width}
+\end{figure}
+
+\vspace{0.4cm}
+
+\begin{limitbox}
+	\texttt{Risk()} returns its bounds on a numerical grid with step
+	$\approx 0{,}0068$ percentage points of return
+	(\S\ref{sec:price-range-internal-check}), about $0{,}56\,\%$ of a
+	$95\,\%$ width. The difference between the second and third
+	widths ($1{,}234\,\%$ vs $1{,}227\,\%$) is about one grid
+	step and should not be interpreted; the rise to $1{,}29\,\%$ is
+	about ten steps and constitutes a genuine change.
+\end{limitbox}
+
+\newpage	
+
+Two explanations are both consistent with this single
+observation, and \textbf{cannot be distinguished with only
+	4 data points}:
+\begin{enumerate}
+	\item \textbf{Behavior expected by design}: frozen
+	parameters mean the forecast only shifts because
+	the information set changes marginally each day --- no
+	violent reaction is expected or desired from a single new
+	observation.
+	\item \textbf{A structural slowness to react to emerging
+		stress}, which would only show up as a genuine problem
+	(systematic under-coverage) over a longer,
+	genuinely volatile period --- not detectable over a relatively
+	mild week.
+\end{enumerate}
+
+%\textbf{Proposed next step to decide between the two:}
+%re-run the same rolling chain with frozen parameters over a	historical window containing a real, sustained shock (e.g.\ February--April 2020) and check whether the empirical coverage rate collapses. This has since been done (section~\ref{sec:covid}), with a model estimated on data prior to 2020 only: coverage of $77/84 = 91{,}7\,\%$ on the FRED rate (one-sided binomial test $p=0{,}127$), so no collapse, but the test has limited power. Its breaches occurred both before the stress probability rose ($P(\text{stress})$ below $50\,\%$) and after it exceeded $95\,\%$, so a lag in the early days of a shock cannot be ruled out. The question is narrowed, not settled.
+
+\newpage
+
+\subsection{Economic interpretation}
+
+\begin{econbox}[A concrete illustration, not just an abstract test.]
+	
+	Take forecast~3 ($\to$09-16), the one that missed: for a
+	1,000,000~EUR conversion decided at the 09-15 close, the
+	model's $95\,\%$ range implied proceeds between
+	\$1,147,100 and \$1,161,300. The actual outcome (\$1,146,400) fell
+	about \$730 below even the pessimistic end of that
+	range --- on a \$1.15 million transaction, a shortfall
+	equivalent to about $0{,}06\,\%$ of the notional. Framed this way,
+	even this chain's only "miss" was a
+	\textbf{near-miss in dollar terms}, not a scenario that would have
+	caused significant, unplanned damage to a firm.
+\end{econbox}
+
+\vspace{0.4cm}	
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{05_economic_near_miss.png}
+	\caption{Forecast~3's miss in dollar terms --- \$1,146,400 realized vs \$1,147,100 at the pessimistic end of the range, a gap of \$730.}
+	\label{fig:economic-near-miss}
+\end{figure}
+
+\vspace{0.3cm}
+
+\begin{econbox}[The regime signal moved in the right direction, with the inherent one-day lag.]
+	
+	A treasury or trader watching
+	$P(\text{stress})$ climb from under $1\,\%$ to $3\,\%$ between the
+	09-15 and 09-16 thresholds would have received a first, quantified
+	early-warning signal of elevated risk on the very evening of
+	the FOMC day, usable to adjust the hedging posture for the
+	following days --- but not helpful for having avoided the
+	shock itself. Even at $3{,}0\,\%$, the model remained
+	"calm" at $97\,\%$, so this is a directional signal,
+	not a level signal. This is the practical meaning of
+	"reactive, not predictive": the tool says the ground has
+	shifted once it has shifted, not before.
+	
+	\textbf{The single miss falls on the day the theoretical
+		framework would have flagged as structurally unpredictable ---
+		consistent with it, not further proof.} Every earlier
+	section of this project (weak-form market efficiency,
+	Meese \& Rogoff) predicts that a model built from past prices
+	cannot see a future central bank decision coming. The
+	FOMC statement was released on September 16 at 2:00~PM
+	(Eastern time), the day of this chain's only Close-based
+	breach. This is what the theoretical framework leads one to expect, but
+	it rests on a single observation and on a breach of only
+	$\approx 0{,}064\,\%$, within the typical range of gaps between the
+	two price sources.
+\end{econbox}
+
+\subsection{What this means in practice for a model user}
+
+\begin{econbox}
+	A user with data up to a given Friday can compute a genuine,
+	model-based price range for the next trading day, at their
+	chosen confidence level, reflecting the current
+	regime-weighted volatility --- but gets absolutely no
+	information on whether the price will be higher or lower
+	than today. The range answers "how far might it move",
+	never "which way". This is not a simplification that loses
+	something important --- it is the faithful summary of what has been
+	validated (repeatedly, independently, and now empirically
+	in this very test) and what has not.
+\end{econbox}
+
+\newpage
+
+% ═════════════════════════════════════════════════════════════════
+\section{Out-of-sample robustness --- the COVID-19 shock \\(January--April 2020)}
+\label{sec:covid}
+% ═════════════════════════════════════════════════════════════════
+
+\subsection{Objective}
+Where the rolling test (section~\ref{sec:rolling-test}, $n=4$,
+September 2026) could not distinguish "expected
+behavior with frozen parameters" from "a genuine structural
+responsiveness problem", this test was designed specifically to
+answer that question, using a genuinely out-of-sample model
+and a window wide enough (84 trading days) to compute a
+genuine empirical coverage rate.
+
+\subsection{Why a separate, re-estimated model was needed}
+
+The project's main MS-GARCH model (\texttt{ms\_garch.R}) was
+calibrated on the full 2010--2026 sample --- including the
+COVID period itself. Testing this model "on" 2020 would be
+close to circular: the model's likelihood was partly shaped by
+the very event being tested. A genuine robustness test requires a
+model that never saw the shock.
+
+\textbf{Fix:} \texttt{ms\_garch\_pre2020.R} re-estimates a
+separate MS-GARCH($K=2$) using only data up to
+2019-12-31 (2,501 observations). This model is then
+\textbf{frozen} and used, unchanged, throughout the
+January--April 2020 test --- exactly the same frozen-parameter
+design as September's rolling test.
+
+\vspace{0.3cm}
+
+\begin{limitbox}
+	\textbf{A known limitation of the pre-2020 fit, stated
+		honestly...}
+	
+	The pre-2020 fit's stress-regime tail parameter is
+	poorly identified: $\nu_2 = 71{,}73$, std.\ err.\ $=202{,}05$
+	--- the uncertainty is nearly 3 times the estimate itself
+	($p=0{,}361$), much less precise than the already weak
+	$\nu_2 = 22{,}0$ (std.\ err.\ $=16{,}85$) of the full-sample
+	model. Such a high $\nu$ is close to Normal tails. This suggests
+	the pre-2020 decade contains too few genuine extreme
+	events for the model to have learned how thick the stress
+	regime's tail actually should be. This limitation is
+	\textbf{not corrected} --- artificially fixing it would defeat the
+	very purpose of testing what a model built from
+	pre-2020 information alone would actually have produced.
+	
+	Otherwise, the fit is structurally consistent with the
+	full-sample model: the long-run volatilities per
+	regime ($\sigma_1 \approx 0{,}215$, $\sigma_2 \approx 0{,}726$) are
+	close to the full-sample values ($0{,}206$, $0{,}730$),
+	and the stable probabilities ($68{,}7\,\%$/$31{,}3\,\%$ vs
+	$71{,}7\,\%$/$28{,}3\,\%$) are similar.
+\end{limitbox}
+
+\subsection{Test design}
+
+\textbf{Window:} 2020-01-01 to 2020-04-30 (84 trading days) ---
+starts exactly at the pre-2020 cutoff (no gap, no overlap)
+and deliberately begins before the shock (January was calm), so
+that the test covers both a stable period and the acute
+crisis.
+\textbf{Single data source:} unlike the September test,
+this window falls entirely within the project's original FRED
+sample --- no source-switch caveat applies to the
+forecasting pipeline itself. 
+
+%\textbf{Frozen parameters, a single \texttt{set.seed(42)} before the loop} --- same design as \texttt{rolling\_test\_chain.R}.
+
+\subsection{Empirical coverage}
+
+\begin{center}
+	\begin{tabular}{ll}
+		\toprule
+		Coverage & $77/84 = 91{,}7\,\%$ (nominal target: $95\,\%$) \\
+		Breaches & 7 (expected under nominal $95\,\%$: $\approx 4{,}2$) \\
+		\bottomrule
+	\end{tabular}	
+	\end{center}
+	
+	\vspace{0.2cm}
+	
+	\textbf{The correct statistical test here is one-sided}, since the
+	concern specifically involves under-coverage (too many
+	breaches), not a gap in either direction:
+	\[
+	\text{One-sided binomial test } (H_1: \text{actual rate} > 5\,\%)~:
+	p = 0{,}127 \quad (\text{two-sided}~: p = 0{,}200)
+	\]
+	
+	\textbf{Interpretation, stated precisely:} even with the more
+	favorable one-sided test, $p=0{,}127$ is above conventional
+	thresholds ($0{,}05$ or even $0{,}10$) --- the data do not provide
+	statistically significant evidence of under-coverage.
+	\textbf{This is not a validation of good calibration} --- with
+	$n=84$, the test has limited power to distinguish a true breach
+	rate of $5\,\%$ from a true rate of $8\,\%$; the absence of
+	significant evidence of a problem is not evidence of the absence of a
+	problem. What this does say, in relation to the open question of
+	section~\ref{sec:rolling-regime-reactivity}: the model did
+	\textbf{not} collapse or show a dramatic coverage failure
+	(e.g.\ $60$--$70\,\%$) during a genuine major crisis --- a
+	reassuring result, without being decisive.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{01_covid_ribbon_ohlc_84days.png}
+		\caption{Confidence bands and actual OHLC, 84 days (January--April 2020).}
+		\label{fig:covid-ribbon-ohlc}
+	\end{figure}
+	
+	\vspace{0.3cm}
+	
+	\subsection{Close-based breaches: two distinct groups, exactly as expected}
+	
+	\begin{table}[H]
+		\centering
+		\small
+		\caption{Close-based breaches}
+		\begin{tabular}{lrlrr}
+			\toprule
+			Date & Actual (Close) & Direction & Size & $P(\text{stress})$ at forecast \\
+			\midrule
+			2020-02-21 & 1.0855 & High & $0{,}02\,\%$ & $0{,}3\,\%$ \\
+			2020-02-27 & 1.0977 & High & $0{,}31\,\%$ & $0{,}3\,\%$ \\
+			2020-03-02 & 1.1164 & High & $0{,}90\,\%$ & $2{,}5\,\%$ \\
+			2020-03-06 & 1.1319 & High & $0{,}09\,\%$ & $49{,}3\,\%$ \\
+			2020-03-12 & 1.1081 & Low & $0{,}63\,\%$ & $98{,}7\,\%$ \\
+			2020-03-17 & 1.0971 & Low & $0{,}30\,\%$ & $99{,}2\,\%$ \\
+			2020-03-26 & 1.1025 & High & $0{,}44\,\%$ & $98{,}4\,\%$ \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	
+	\vspace{0.3cm}
+	
+	\textbf{Group~A (regime not yet reacted, $P(\text{stress})<50\,\%$):}
+	02/21, 02/27, 03/02, 03/06 (borderline, $49{,}3\,\%$) --- consistent with the
+	reactive-not-predictive lag already documented
+	(section~\ref{sec:rolling-test}).
+	
+	\vspace{0.2cm}
+	
+	\textbf{Group~B (regime already flagged as high stress,
+		$P(\text{stress})>95\,\%$):} 03/12, 03/17, 03/26 --- the model
+	correctly identified acute stress \textbf{and yet} produced
+	a range too narrow for the realized move.
+	
+	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{02_breach_groups_A_B.png}
+		\caption{The two breach groups --- Group~A (regime not yet reacted) vs Group~B (regime already flagged, range still too narrow).}
+		\label{fig:breach-groups}
+	\end{figure}
+	
+	\vspace{0.3cm}
+	
+	\subsection{Beyond the Close: intraday High~/~Low reveals a much wider gap}
+	
+	Actual OHLC data (Pound Sterling Live --- FRED has no
+	intraday High/Low) were obtained to check the forecast
+	bands against the full daily range, not just the Close.
+	
+	\begin{center}
+		\begin{tabular}{lr}
+			\toprule
+			Close-based breaches & 7/84 ($8{,}3\,\%$) \\
+			Days with High $>$ upper bound & 12/84 ($14{,}3\,\%$) \\
+			Days with Low $<$ lower bound & 7/84 ($8{,}3\,\%$) \\
+			UNIQUE days touching outside the band (Close OR High OR Low) & \textbf{19/84 ($22{,}6\,\%$)} \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	\vspace{0.2cm}
+	
+	\textbf{Nearly one day in four touched outside the $95\,\%$
+		band at some intraday point --- about $2{,}7$ times the
+		Close-based breach rate.} This is a substantially wider gap
+	than the smaller September test sample suggested, and
+	reinforces the already established finding (section~\ref{sec:price-range},
+	section~\ref{sec:rolling-test}): the model is built for, and should
+	only be judged on, close-to-close moves; intraday
+	reality is noticeably more volatile than a Close-only
+	coverage check would suggest.
+	
+	Most of the additional breaches visible only via
+	High/Low cluster tightly around known crisis dates ---
+	days where the Close returned inside the band by the end of the
+	session, but where the price touched outside the band during the
+	day.
+	
+	\begin{limitbox}
+		\textbf{A data-sourcing caveat, stated precisely:}
+		2020-03-19 --- the most extreme day of the window (PSL
+		Low $=1{,}0653$, the crisis trough) --- shows a
+		Low breach but \emph{not} a Close breach, implying
+		that FRED's own value for that date differed enough
+		from PSL's Close ($1{,}0656$) to stay inside
+		the band. This is consistent with, and possibly amplified during,
+		the FRED/PSL gap already documented (section~\ref{sec:price-range}) ---
+		cross-source noise may matter more on the most
+		volatile days, one more reason why the Close-based
+		coverage figure (single-source, FRED only) is the more
+		reliable of the two views for judging the model itself.
+	\end{limitbox}
+	
+	\vspace{0.3cm}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_breach_rate_by_definition.png}
+		\caption{Breach rate by definition --- $8{,}3\,\%$ / $14{,}3\,\%$ / $8{,}3\,\%$ / $22{,}6\,\%$.}
+		\label{fig:breach-rate-by-definition}
+	\end{figure}
+	
+	\subsection{Economic interpretation}
+	
+	\begin{econbox}
+		\begin{itemize}
+			\item \textbf{A treasury relying on this model throughout the
+				crisis would have been "surprised" close to close
+				about 1 day in 12} (7/84), close to but somewhat above
+			the 1-in-20 promised by the model --- a modest, not
+			spectacular, gap. But if that same treasury managed
+			intraday risk (e.g.\ \emph{stop-loss} orders, margin
+			calls triggered by any touch, not just the day's final
+			print), \textbf{it would have been surprised about 1 day in 4}
+			(19/84) --- a materially different risk picture depending on
+			the question actually being asked of the model.
+			\item \textbf{The regime signal was informative but not
+				sufficient on its own on the most extreme days.} The
+			Group~B cases show that even "the model correctly
+			says we are $98\,\%$ certain to be in the stress
+			regime" did not guarantee the band was wide enough on
+			the very worst days (mid- to late March) --- a limitation
+			worth knowing before treating
+			"$P(\text{stress})$ is high" as a complete risk signal
+			on its own.
+			\item \textbf{The most useful practical takeaway}: this
+			model --- like any model built purely from
+			a comparatively calm decade of history --- probably underestimates
+			how extreme a genuinely unprecedented crisis can become,
+			even once it correctly recognizes that a crisis is
+			underway. This is a point of humility about tail risk,
+			more than a flaw specific to this implementation.
+		\end{itemize}
+	\end{econbox}
+	
+	\subsection{What remains open}
+	
+	\begin{itemize}
+		\item The $\nu_2$ hypothesis (Group~B) --- not tested.
+		\item The full-scale backtest over the entire 2010--2026
+		sample (not just a crisis window) --- still
+		the major next step planned, now carried out
+		(section~\ref{sec:backtest}).
+	\end{itemize}
+	
+	\newpage
+	
+	% ═════════════════════════════════════════════════════════════════
+	\section{Full expanding-window backtest (2013--2026)}
+	\label{sec:backtest}
+	% ═════════════════════════════════════════════════════════════════
+	
+	This is the project's first test with genuine statistical
+	power --- 3,424 one-day-ahead forecasts over 14 years --- and the first
+	result allowing a real, well-founded claim about the
+	model's calibration, rather than a demonstration or a
+	suggestive but underpowered check.
+	
+	\subsection{Design}
+	
+	\textbf{Recursive out-of-sample, expanding-window backtest}
+	\citep{west1996}: a standard, established method, not an
+	\emph{ad hoc} invention. 14 \emph{folds}, each re-estimating a fresh
+	MS-GARCH($K=2$) on all data from 2010 up to a given
+	year-end, then forecasting every trading day of the following
+	year with these \textbf{frozen} parameters:
+	
+	\begin{table}[H]
+		\centering
+		\small
+		\caption{Backtest design (excerpt)}
+		\begin{tabular}{lllr}
+			\toprule
+			Fold & Trained up to & Test year & Training obs. \\
+			\midrule
+			1 & 2012-12-31 & 2013 & 751 \\
+			2 & 2013-12-31 & 2014 & 1,002 \\
+			\multicolumn{4}{c}{\dots} \\
+			8 & 2019-12-31 & 2020 & 2,501 \\
+			\multicolumn{4}{c}{\dots} \\
+			14 & 2025-12-31 & 2026 & 4,000 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	
+	The first \emph{fold} deliberately starts with only 2 years
+	(2010--2012, 751 observations) rather than waiting for a larger
+	initial sample --- accepted as a deliberate design choice,
+	with the expectation (confirmed below) that the early
+	\emph{folds} would be estimated less precisely than later ones.
+	
+	\textbf{Computational scope decision:} only the $95\,\%$
+	interval is computed per day (not the full multi-level
+	$20/50/80/95\,\%$ set used for the COVID test), to keep
+	runtime manageable across $\approx 3,500$ forecast steps --- a
+	simpler visualization could be built from this
+	single-level output if needed later.
+	
+	\textbf{Robustness engineering:} each of the $\approx 14$
+	heavy re-estimations, as well as every \texttt{State()}/\texttt{Risk()}
+	call inside the daily loop, is wrapped in
+	\texttt{tryCatch} --- a single problematic year or day
+	cannot silently corrupt or interrupt the run. Results
+	are saved incrementally after each \emph{fold}.
+	Automated warnings trigger for two red flags already
+	identified earlier in the project: persistence within
+	$0{,}001$ of the IGARCH boundary
+	(section~\ref{sec:garch-stability}) and a tail parameter ($\nu$)
+	whose standard error exceeds its own point estimate
+	(section~\ref{sec:covid}).
+	
+	\subsection{Main result: this project's first genuinely powerful validation}
+	
+	\begin{center}
+		\begin{tabular}{ll}
+			\toprule
+			Total forecasts & 3,424 \\
+			Coverage & $3,270/3,424 = \mathbf{95{,}50\,\%}$ (nominal: $95\,\%$) \\
+			One-sided binomial test ($H_1$: actual rate $>5\,\%$) & $\mathbf{p=0{,}919}$ \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	\vspace{0.3cm}
+	
+	\textbf{This is a real, statistically significant result ---
+		not a demonstration.} With $n=3,424$, the test has genuine
+	power to detect a significantly elevated breach rate,
+	and finds none: empirical coverage ($95{,}50\,\%$) sits
+	almost exactly on the nominal target, and the one-sided test gives
+	absolutely no evidence of under-coverage ($p=0{,}919$, far from
+	any conventional threshold). This is the first point in the entire
+	project where "the model appears well calibrated" can be
+	stated with genuine statistical grounding, rather than as a
+	demonstration (section~\ref{sec:rolling-test}, $n=4$) or a
+	suggestive but underpowered check (section~\ref{sec:covid}, $n=84$, $p=0{,}127$).
+	
+	\vspace{0.5cm}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{02_binomial_test_full.png}
+		\caption{Binomial test over the 3,424 forecasts --- the entire project's single most important result.}
+		\label{fig:binomial-test-full}
+	\end{figure}
+	
+	\newpage
+	
+	\subsubsection{Independent reproducibility check}
+	
+	Fold~8 (trained up to 2019-12-31) uses a training cutoff
+	identical to the separate model built in
+	section~\ref{sec:covid}. The two fits match
+	\textbf{exactly}: $\alpha+\beta = 0{,}9978/0{,}9881$,
+	$\nu = 7{,}10/71{,}73$, in both. This is not expected by
+	construction (they were run in different scripts, at
+	different times) --- it confirms that the pipeline is genuinely
+	reproducible.
+	
+	\subsubsection{Reconciliation with the different result of section~\ref{sec:covid}}
+	
+	That section reported $91{,}7\,\%$ coverage (7/84 breaches)
+	for January--April 2020 specifically. This backtest's
+	2020 fold covers \textbf{the full calendar year} (250 days) and finds
+	$95{,}2\,\%$ coverage (12 breaches). This is not
+	contradictory: the implied breach rate for the remaining
+	May--December 2020 period is only about $3{,}0\,\%$
+	(5 breaches/166 days) --- 2020's calmer second half
+	dilutes the higher concentration of breaches from the
+	acute January--April shock into a full-year average close
+	to nominal. Both results are correct descriptions of different
+	windows.
+	
+	\subsection{Coverage by year}
+	
+	\begin{table}[H]
+		\centering
+		\small
+		\caption{Coverage by year}
+		\begin{tabular}{lrl}
+			\toprule
+			Year & Coverage & Breaches/$n$ \\
+			\midrule
+			2013 & 95.2\,\% & 12/251 \\
+			2014 & 98.4\,\% & 4/250 \\
+			\textbf{2015} & \textbf{91.2\,\%} & \textbf{22/251} \\
+			2016 & 97.6\,\% & 6/251 \\
+			2017 & 94.8\,\% & 13/249 \\
+			2018 & 95.6\,\% & 11/249 \\
+			2019 & 95.6\,\% & 11/249 \\
+			2020 & 95.2\,\% & 12/250 \\
+			2021 & 95.2\,\% & 12/249 \\
+			2022 & 95.2\,\% & 12/250 \\
+			2023 & 96.8\,\% & 8/249 \\
+			2024 & 96.8\,\% & 8/251 \\
+			2025 & 94.4\,\% & 14/250 \\
+			2026 (partial, through Sept.) & 94.9\,\% & 9/175 \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{01_coverage_by_year_events.png}
+		\caption{Coverage by year, with named market events.}
+		\label{fig:coverage-by-year}
+	\end{figure}
+	
+	No year shows a dramatic coverage collapse (e.g.
+	$70$--$80\,\%$), even well-known turbulent years (COVID 2020,
+	the 2022 monetary tightening) --- consistent with the strong
+	overall result. \textbf{2015 stands out as the weakest year.}
+	
+	\subsubsection{2015's underperformance is directly linked to a convergence warning --- not a coincidence to ignore}
+	
+	Fold~3 (trained up to 2014-12-31, testing 2015) is the
+	only fold, alongside itself, to trigger the IGARCH
+	boundary warning: $\alpha+\beta = 0{,}9999/0{,}9998$, essentially at
+	the stationarity limit (section~\ref{sec:garch-stability} had
+	documented this same fragility mode earlier in the project). \textbf{This
+		is a meaningful, corroborating link, not merely a
+		diagnostic curiosity}: the only fold with a numerical
+	warning flag during estimation is also the only year with a
+	materially degraded actual coverage ($91{,}2\,\%$ against a
+	range of $94$--$98\,\%$ everywhere else). This reinforces the
+	finding that this script's built-in automated convergence
+	warnings detect something practically relevant, not a mere
+	cosmetic estimation detail.
+	
+	\newpage
+	
+	\subsection{A recurring structural finding: $\nu_2$ is persistently hard to identify}
+	
+	The "stress-regime tail parameter poorly identified"
+	warning ($SE(\nu_2) > \nu_2$, i.e.\ a $t$-type ratio,
+	$\nu_2/SE(\nu_2)$, below 1) triggered in
+	\textbf{10 of the 14 folds}. Folds~1, 3, 6, and 14 did
+	not trigger it.
+	
+	\begin{corrbox}[Why precisely these four folds? Investigated, not assumed]
+		Before writing anything about a pattern, three candidate
+		explanatory variables were checked against the ratio
+		$\nu_2/SE(\nu_2)$ across the 14 folds: training sample
+		size, Regime~2's own GARCH persistence
+		($\alpha+\beta_2$), and the point estimate of $\nu_2$
+		itself.
+		
+		\textbf{A first pass showed a strong correlation with
+			Regime~2's persistence ($r=-0{,}95$)} --- but this was
+		checked further rather than reported as is, and turned out to be
+		\textbf{entirely driven by fold~6's status as an extreme
+			outlier} ($\alpha+\beta_2 = 0{,}436$, far outside the
+		$0{,}93$--$0{,}999$ range of every other fold).
+		Removing fold~6 alone collapses the correlation to $r=+0{,}22$
+		(weak, and the sign flips) --- confirming that this apparent
+		pattern was a single-point artifact, not a real relationship. Sample
+		size showed essentially no correlation either
+		($r=-0{,}20$).
+		
+		\textbf{The more precise --- and more sobering ---
+			reframing:} since $\nu_2/SE(\nu_2)$ is mathematically a $t$
+		statistic for testing $\nu_2=0$, computing approximate
+		$p$-values for the 14 folds shows that \textbf{only 2 of 14 (folds~3
+			and~6) reach conventional statistical significance
+			($p<0{,}05$)}. The two folds that "passed" the
+		script's warning threshold besides these (folds~1 and~14)
+		are, in fact, also not statistically well identified
+		($p \approx 0{,}16$ and $p \approx 0{,}19$) --- they simply
+		crossed the script's own threshold (ratio $>1$, equivalent to a
+		weak bar of $p \approx 0{,}32$), which is itself not a
+		meaningful threshold for genuine statistical confidence.
+		
+		\textbf{Honest conclusion:} $\nu_2$ is essentially
+		unidentifiable across almost all 14 folds, not
+		simply "hard to identify in most folds while being
+		correct in a few". No single explanatory variable
+		among those checked accounts for which folds sit marginally
+		above or below the (arbitrary) warning threshold --- this
+		reads better as noise around a weak boundary, not a
+		structural distinction between "good" and "bad"
+		folds. The practical finding from the previous
+		section~\ref{sec:backtest} nonetheless stands:
+		the model's \emph{average} one-step coverage is excellent despite
+		this --- but confidence in exactly how it prices the
+		stress regime's most extreme outcomes should remain low
+		throughout the sample, not just in a minority of
+		folds.
+	\end{corrbox}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{04_nu2_precision_by_fold.png}
+		\caption{$\nu_2$ precision by fold --- essentially unidentifiable across the sample.}
+		\label{fig:nu2-precision}
+	\end{figure}
+	
+	\vspace{0.3cm}
+	
+	\subsection{The fold~6 anomaly (2018)}
+	
+	Fold~6's Regime~2 (trained on 2010--2017) showed striking
+	behavior, different from every other fold:
+	$\alpha+\beta_2 = 0{,}436$ (vs $0{,}93$--$0{,}999$ elsewhere) --- very
+	low internal GARCH persistence --- while $\nu_2=99{,}95$
+	was, unusually, \textbf{well} identified ($SE=10{,}08$, smaller
+	than the estimate, the opposite of the previous section's
+	recurring pattern). This was resolved once the transition matrix
+	was logged
+	
+	
+	\begin{center}
+		\small
+		\begin{tabular}{|p{5cm}|p{5cm}|}
+			\hline
+			$P(1\to2)$ & $0{,}0020$ (rare: an entry into regime~2 expected every $\approx 500$ trading days, roughly every 2 years) \\
+			\hline
+			$P(\text{stay in }2)$ & $0{,}9960$ (very sticky: expected duration once entered $\approx 250$ days, about 1 year) \\
+			\hline
+		\end{tabular}
+	\end{center}
+	
+	\vspace{0.4cm}
+	
+	With only 249 test days in 2018 and an entry probability of
+	$0{,}002$/day, the \emph{expected} number of entries into
+	regime~2 during that specific year is only \textbf{0.5} ---
+	meaning it was entirely plausible, by chance alone, that
+	no full entry would occur in 2018. This matches exactly what was
+	observed (regime~2 probability never exceeding $25{,}6\,\%$,
+	never fully switching over).
+	
+	\vspace{0.4cm}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{05_fold6_regime2_outlier.png}
+		\caption{Fold~6's Regime~2 --- a resolved structural edge case, not a model flaw.}
+		\label{fig:fold6-outlier}
+	\end{figure}
+	
+	\vspace{0.3cm}
+	
+	\textbf{What this reveals about fold~6's Regime~2, now with
+		a coherent story}: combined with its low internal GARCH
+	persistence (shocks fade almost immediately) and its high,
+	well-identified $\nu$ (near-Normal), this fold's Regime~2 does
+	not resemble the "acute stress" state found in most
+	other folds --- it resembles a \textbf{rare,
+		structurally distinct, but calm and stable} state once entered, not a
+	panic regime. This is a legitimate, different
+	characterization that the 2010--2017 training window happened to
+	support, not a model flaw. Nor did this translate into
+	any visible degradation of the 2018 forecasts ($95{,}6\,\%$
+	coverage, $1{,}75\,\%$ average band width, both entirely
+	typical) --- consistent with a regime that, that year, simply never
+	got triggered rather than one that malfunctioned.
+	
+	\newpage
+	
+	\begin{limitbox}
+		\textbf{Process note, stated plainly:} this section was
+		first drafted with placeholder language
+		("pending a re-run") before the corrected script had
+		actually been run --- a sequencing error flagged directly during
+		this project's own review process. The lesson
+		learned: documentation edits that depend on
+		results not yet generated should wait for those results, not
+		anticipate them, even when the fix itself is already coded.
+	\end{limitbox}
+	
+	\subsection{Economic interpretation --- for a reader checking these results against actual market history}
+	
+	\begin{econbox} The headline figure, translated
+		A treasury, trader, or risk manager running
+		this model over the last 14 years would have seen it keep
+		almost exactly its stated promise: about 1 surprise per 20 trading
+		days, matching the announced $95\,\%$ confidence
+		level. This is a materially stronger claim than anything
+		established earlier in the project --- no longer "the
+		model looks reasonable" but "the model's stated
+		uncertainty has proven empirically accurate across
+		3,424 independent daily tests".
+	\end{econbox}
+	
+	\vspace{0.3cm}
+	
+	\begin{econbox}
+		The weak year (2015) coincides with real, named market stress.
+		2015 was not a random weak point. It contains the
+		\textbf{Swiss National Bank's sudden removal of the
+			EUR/CHF floor} (January 15, 2015) --- a shock that,
+		though centered on the franc, triggered widespread FX
+		volatility spillovers in the euro area --- alongside the
+		\textbf{launch of the ECB's full quantitative easing}
+		(announced January 2015) and the acute phase of the
+		\textbf{Greek sovereign debt crisis},
+		culminating in capital controls and the July 2015
+		referendum. Three distinct, significant euro-area shocks
+		concentrated in a single year constitute a plausible, concrete
+		explanation for why this particular fold's underlying
+		volatility dynamics were harder to capture
+		(the IGARCH boundary warning from the previous section) and
+		why realized coverage dropped to $91{,}2\,\%$ --- not a
+		mysterious statistical fluke, but a genuinely unusual year by
+		the standards of the surrounding decade.
+	\end{econbox}
+	
+	\newpage
+	
+	\begin{econbox}Other named events the model absorbed without breaking
+		Several other major, well-documented,
+		market-moving events fall in years showing
+		\textbf{no degraded coverage} --- worth naming explicitly since it
+		reinforces the main finding:
+		\begin{itemize}
+			\item \textbf{2013} (the "\emph{taper tantrum}"): the
+			Fed's May 2013 signal that QE asset purchases would
+			slow triggered a sharp, global repricing of risk ---
+			2013 coverage ($95{,}2\,\%$) remained close to
+			nominal.
+			\item \textbf{2016} (the Brexit referendum, June 23, and the
+			U.S. presidential election, November): two major, sudden
+			\emph{risk-off}/\emph{risk-on} episodes --- 2016 shows the
+			\emph{best} coverage of any year in the whole sample
+			($97{,}6\,\%$).
+			\item \textbf{2018} (the Italian political crisis, May 2018;
+			rising U.S.--China trade tensions): coverage
+			($95{,}6\,\%$) unaffected.
+			\item \textbf{2020} (COVID-19): already examined in detail
+			in section~\ref{sec:covid} --- the full-year coverage
+			($95{,}2\,\%$) looks unremarkable precisely because the
+			February--April acute shock is diluted by a calmer
+			second half.
+			\item \textbf{2022} (Russia's invasion of Ukraine,
+			February 2022, and the Fed's most aggressive
+			tightening cycle in decades, culminating with EUR/USD
+			briefly reaching parity in September): coverage
+			($95{,}2\,\%$) still landed almost exactly on
+			target.
+		\end{itemize}
+	\end{econbox}
+	
+	\vspace{0.3cm}
+	
+	\begin{limitbox}
+		\textbf{A recency caveat, stated plainly:} for 2023
+		and beyond, this \\document does not name specific market
+		events with the same confidence as the years above ---
+		these years fall within or near the period where claims
+		should be independently verified rather than
+		asserted from memory. The \emph{statistical} results for
+		these years ($2023$: $96{,}8\,\%$, $2024$: $96{,}8\,\%$, $2025$: $94{,}4\,\%$,
+		partial 2026: $94{,}9\,\%$) are read directly from this
+		project's own backtest output and are not in question; only the
+		specific factual narrative attached to them is treated
+		here with more caution.
+	\end{limitbox}
+	
+	\newpage
+	
+	\begin{econbox}[Different readers, different practical takeaways]
+		\begin{itemize}
+			\item \textbf{A corporate treasury hedging a recurring
+				EUR/USD exposure} can read this backtest as evidence that
+			sizing hedges on this model's $95\,\%$ band, updated
+			daily, would have left them "surprised" on
+			the wrong side about as often as advertised --- about
+			once a year, roughly $12$--$14$ times, not dramatically more.
+			\item \textbf{A risk manager setting VaR-type limits}
+			gets a stronger result: the one-sided binomial test
+			means there is no statistical basis, across
+			14 years including two genuine \\global-scale crises, for
+			claiming that this model's stated $95\,\%$ threshold
+			systematically underestimates risk --- a claim many
+			simpler volatility models cannot support once
+			actually tested this way.
+			\item \textbf{A trader seeking a directional edge} gets
+			nothing new here either, in either direction --- this
+			backtest, like every other step of this project, says nothing about
+			direction (sections~\ref{sec:baseline},~\ref{sec:controls}). A
+			well-calibrated range is not, and never claimed to
+			be, a trading signal.
+			\item \textbf{A researcher or reviewer} should weigh the
+			strong headline result against the previous section's honest
+			caveat: the mechanism generating the extreme-tail
+			forecasts ($\nu_2$) remains persistently hard to
+			pin down across the sample, even though the
+			\emph{average} coverage comes out correct. Good
+			calibration on average is not the same claim as
+			"every model component is precisely estimated" ---
+			both are true here, and this document deliberately avoids
+			letting the strong headline figure mask the
+			weakest component.
+		\end{itemize}
+	\end{econbox}
+	
+	\newpage
+	
+	% ═════════════════════════════════════════════════════════════════
+	\section{General conclusion}
+	\label{sec:conclusion}
+	% ═════════════════════════════════════════════════════════════════
+	
+	\subsection{What this project establishes}
+	
+	The two objectives stated in the introduction (\S\ref{sec:intro}) are
+	delivered.
+	
+	\begin{econbox}[Objective (a) --- quantitatively measuring a market fear~/~volatility shift.] 
+		
+		A GARCH(1,1) with Student's~$t$ innovations
+		($\hat\nu \approx 7{,}04$) is specified and validated on
+		2010--2026 EUR/USD log returns (section~\ref{sec:garch}): clean
+		diagnostics, fat tails correctly absorbed, decisive model
+		comparison. A temporal stability test over five sub-periods
+		(section~\ref{sec:garch-stability}) shows point estimates
+		that vary, but which a formal likelihood-ratio test
+		does not establish as statistically unstable ($p=0{,}277$) --- a
+		nuance kept intact rather than resolved in a convenient
+		direction.
+		
+		From this foundation, two distinct and complementary results are
+		established regarding return predictability:
+		\begin{itemize}
+			\item the \textbf{direction} of the one-day return is not
+			predictable from the volatility shock, with or without
+			control variables (sections~\ref{sec:baseline} and~\ref{sec:controls}) --- a
+			robust null result, consistent with weak-form market
+			efficiency and the established FX literature
+			\citep{meeserogoff1983,fama1984};
+			\item the \textbf{magnitude} of the one-day return \emph{is}
+			predictable from the level of conditional volatility
+			($R^2=0{,}090$, section~\ref{sec:magnitude}) --- an internal
+			consistency result of the GARCH, not a new discovery, but
+			directly exploitable.
+		\end{itemize}
+	\end{econbox}
+	
+	\vspace{0.3cm}
+	
+	\begin{econbox}[Objective (b) --- an operational use] 
+		
+		Two regime detection layers, honestly labeled "low~/~normal~/~high
+		volatility"
+		(\S\ref{sec:regime-hmm}) --- a three-state Gaussian HMM
+		(section~\ref{sec:regime-hmm}) and a two-regime Markov-Switching
+		GARCH following \citet{haasmittnikpaolella2004}, implemented via
+		\citet{ardia2019} (section~\ref{sec:msgarch}) --- feed a
+		genuine, computed operational price range, not an
+		illustrative one (section~\ref{sec:price-range}): $[1{,}1533~;~1{,}1675]$
+		as of 2026-09-11, whose width "breathes" with the regime
+		(stress~/~calm width ratio of $1{,}88\times$ to $2{,}09\times$
+		depending on the confidence level).
+	\end{econbox}	
+	
+	\newpage
+	
+	This range is validated at three nested scales, from
+	demonstration to proof:
+	\begin{enumerate}
+		\item a rolling chain test with 4 forecasts
+		(section~\ref{sec:rolling-test}) --- an end-to-end
+		demonstration, not proof of calibration, with a marginal
+		miss dissected into two distinct channels rather than left as a
+		single verdict;
+		\item an out-of-sample robustness test on the COVID-19 crisis
+		(section~\ref{sec:covid}, $n=84$): coverage of $91{,}7\,\%$,
+		$p=0{,}127$ --- suggestive, not decisive, with
+		acknowledged limited statistical power;
+		\item a full expanding-window backtest over 14 years
+		(section~\ref{sec:backtest}, $n=3,424$, the method of
+		\citet{west1996}): coverage of $95{,}50\,\%$ against a
+		nominal target of $95\,\%$, $p=0{,}919$ --- the project's first
+		validation with genuine statistical power, \\absorbing without
+		breaking the 2013 \emph{taper tantrum}, the 2016 Brexit and
+		U.S. election, the 2018 Italian political crisis, the 2020
+		COVID shock, and the 2022 Russia-Ukraine shock, while
+		honestly flagging its one weak year (2015, $91{,}2\,\%$) and
+		linking it both to an internal numerical
+		warning (the IGARCH boundary) and to three real, named
+		macroeconomic shocks (the Swiss National Bank, the ECB's
+		QE launch, the Greek debt crisis).
+	\end{enumerate}
+	
+	\newpage
+	
+	\subsection{A remark on method, not just on results}
+	
+	A common thread runs through this project's eleven steps,
+	more visible reading it start to finish than within
+	any single section: every significant result was subjected to at
+	least one serious attempt to challenge it before being
+	accepted --- a test configuration error corrected
+	(section~\ref{sec:garch}), a poorly chosen diagnostic
+	threshold corrected (section~\ref{sec:garch}), a
+	plausible economic narrative ultimately disproven by
+	independent evidence (section~\ref{sec:garch-stability}), an
+	entire conceptual framing revised before any code was written
+	(section~\ref{sec:regime-hmm}), a distortion channel quantified rather
+	than assumed negligible (section~\ref{sec:rolling-test}), a
+	hypothesis explicitly left unverified rather than presented as settled
+	(section~\ref{sec:covid}). The fact that the final backtest's
+	headline result ($p=0{,}919$) comes after this accumulation of
+	checks --- not instead of them --- is what gives it its weight.
+	
+	\subsection{What remains open}
+	
+	Consolidated from earlier sections, with no attempt to
+	present it as thinner than it is:
+	
+	\begin{itemize}
+		\item The mechanism behind $\nu_2$'s persistent
+		imprecision (the stress-regime tail parameter) is not resolved ---
+		flagged consistently in sections~\ref{sec:msgarch},
+		\ref{sec:covid}, and~\ref{sec:backtest}, never masked by the
+		otherwise excellent average coverage result.
+		.
+		\item The Viterbi path used for the annual regime
+		counts (section~\ref{sec:msgarch}) is not produced by any
+		script currently under version control --- a reproducibility
+		gap flagged explicitly rather than hidden, on the same footing
+		as the missing saved standard errors for the stability test
+		(section~\ref{sec:garch-stability}).
+		\item No independent (non-FRED) cross-check has been
+		conducted across the full 14 years of the complete backtest --- a
+		deliberate scope choice, not an oversight, but one that leaves a
+		spot-check against a handful of well-known extreme dates as a
+		cheaper alternative, not yet carried out
+		(section~\ref{sec:backtest}).
+		\item The hypothesis that an insufficiently thick pre-2020
+		$\nu_2$ explains the COVID Group~B breaches
+		(section~\ref{sec:covid}) remains untested.
+	\end{itemize}
+	
+	\vspace{0.3cm}
+	
+	\textbf{What this project does not claim to be:} a trading signal.
+	No step, from start to finish, produced or sought to produce an
+	exploitable directional edge --- the robust null result on
+	direction (sections~\ref{sec:baseline} and~\ref{sec:controls}) and the
+	explicit reminder at every later step that the price range carries
+	no directional information are the constant confirmation of this. What
+	this project delivers is narrower and, on the basis of the
+	$n=3,424$ backtest, better established: \textbf{\textit{a quantitative,
+			testable measure of market volatility and regime, and a price
+			range whose calibration has been empirically verified,
+			not merely assumed.}}
+	
+	% ═════════════════════════════════════════════════════════════════
+	\newpage
+	\section*{Appendix --- supplementary figures}
+	\addcontentsline{toc}{section}{Appendix --- supplementary figures}
+	\renewcommand{\thefigure}{A.\arabic{figure}}
+	\setcounter{figure}{0}
+	% ═════════════════════════════════════════════════════════════════
+	
+	This appendix collects figures produced over the course of the
+	project but not essential to reading the body text, following
+	the \emph{Graphs\_Ways.md} arbitration: a figure appears here only if it
+	supports a specific claim cited in the body --- a
+	skeptical reader must be able to find it. Purely
+	diagnostic figures, with no direct link to a claim in the
+	text (useful for reproducibility, not for reading),
+	stay outside this document.
+	
+	
+	
+	\subsection*{GARCH(1,1) (\S\ref{sec:garch})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{04_standardized_residuals_studentt.png}
+		\caption{Standardized residuals of the Student's~$t$ model.}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{07_model_comparison_aic_bic.png}
+		\caption{AIC/BIC comparison, Normal vs Student's~$t$.}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{08_kurtosis_comparison.png}
+		\caption{Comparison of empirical and theoretical kurtosis.}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\subsection*{Baseline regression (\S\ref{sec:baseline})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{05_distribution_deltay_percentiles.png}
+		\caption{Distribution of $\Delta Y(t)$ and percentiles used for the exercise in \S\ref{sec:baseline} (economic effect at $\pm0{,}05$/$\pm0{,}20$).}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\subsection*{Regression with controls (\S\ref{sec:controls})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{02_aic_bic_comparison.png}
+		\caption{AIC/BIC comparison, re-estimated baseline against the extended specification with controls.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_forest_plot_compact.png}
+		\caption{Compact \emph{forest plot} of the extended specification's coefficients.}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\subsection*{Magnitude regression (\S\ref{sec:magnitude})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{01_specA_scatter_deltay.png}
+		\caption{Spec~A --- scatter plot of $|r(t+1)|$ against $\Delta Y(t)$ (diluted relationship, \S\ref{sec:magnitude}).}
+	\end{figure}
+	
+	\vspace{0.5cm}	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{05_predicted_magnitude_percentiles.png}
+		\caption{Predicted magnitude at the $\sigma(t)$ percentiles used in the worked example of \S\ref{sec:magnitude}.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{HMM regime detection (\S\ref{sec:regime-hmm})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_density_logsigma_by_regime.png}
+		\caption{Density of $\log\sigma(t)$ by regime.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{05_transition_matrix_heatmap.png}
+		\caption{HMM transition matrix, as a heatmap.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{07_recent_period_zoom.png}
+		\caption{Zoom on the regime classification of the most recent observations.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Markov-Switching GARCH (\S\ref{sec:msgarch})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{01_smoothed_prob_regime2_fullsample.png}
+		\caption{Smoothed probability of regime~2, full sample (unzoomed view, complement to Figure~\ref{fig:covid-detection-zoom}).}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{07_information_criteria_delta.png}
+		\caption{Direct AIC/BIC gap between MS-GARCH and simple GARCH ---
+			$\Delta$AIC~$=-13{,}51$, $\Delta$BIC~$=+18{,}18$ --- referenced from
+			\S\ref{sec:msgarch}, replacing a discarded raw bar
+			chart (the gap was visually imperceptible there at the scale of
+			the AIC/BIC values themselves).}
+		\label{fig:annex-info-criteria-delta}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Operational price range (\S\ref{sec:price-range})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{02_expost_ohlc_vs_range.png}
+		\caption{\emph{Ex-post} OHLC vs the forecast range, 2026-09-14.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_range95_by_scenario.png}
+		\caption{$95\,\%$ range by regime scenario (mixture, certain calm, certain stress).}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Rolling chain test (\S\ref{sec:rolling-test})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{01_rolling_bands_and_candles.png}
+		\caption{Forecast bands and OHLC candles, preliminary view (variant preceding Figure~\ref{fig:range-vs-actual-chain}).}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_ohlc_vs_range_chain.png}
+		\caption{Full OHLC (Open/High/Low/Close) vs the forecast range, chained across the 4 forecasts.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{04_prob_stress_vs_range_width.png}
+		\caption{$P(\text{stress})$ and range width, on actual scales --- a precise complement to Figure~\ref{fig:stress-prob-vs-width} (which indexes both series to base 100 for visual readability).}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Out-of-sample robustness --- COVID-19 (\S\ref{sec:covid})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{05_user_surprise_rate.png}
+		\caption{"Surprise" rate for a model user, close vs intraday --- 1 day in 12 vs 1 day in 4 (\S\ref{sec:covid}).}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Temporal stability of the GARCH (\S\ref{sec:garch-stability})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{02_parameters_by_period.png}
+		\caption{Parameters $\omega,\alpha,\beta,\nu$ by period.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_halflife_vs_persistence.png}
+		\caption{Half-life vs persistence ($\alpha+\beta$), by period.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{04_omega_by_period.png}
+		\caption{$\omega$ by period --- illustrates Period~2's imprecision.}
+	\end{figure}
+	
+	\vspace{0.5cm}		
+	
+	\subsection*{Full backtest (\S\ref{sec:backtest})}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\linewidth]{03_alphabeta_by_fold.png}
+		\caption{$\alpha+\beta$ by expanding-window backtest \emph{fold}.}
+	\end{figure}
+	
+	% ═════════════════════════════════════════════════════════════════
+	\newpage
+	\section*{References}
+	\addcontentsline{toc}{section}{References}
+	% ═════════════════════════════════════════════════════════════════
+	
+	\begin{thebibliography}{99}
+		
+		\bibitem[Ardia et al.(2019)]{ardia2019}
+		Ardia, D., Bluteau, K., Boudt, K., Catania, L., \& Trottier, D.-A.
+		(2019). Markov-Switching GARCH Models in R: The MSGARCH Package.
+		\textit{Journal of Statistical Software}, 91(4), 1--38.
+		
+		\bibitem{fama1984}
+		Fama, E.~F. (1984). Forward and Spot Exchange Rates.
+		\textit{Journal of Monetary Economics}, 14(3), 319--338.
+		
+		\bibitem{grangernewbold1974}
+		Granger, C.~W.~J., \& Newbold, P. (1974). Spurious Regressions in
+		Econometrics. \textit{Journal of Econometrics}, 2(2), 111--120.
+		
+		\bibitem[Gray(1996)]{gray1996}
+		Gray, S.~F. (1996). Modeling the Conditional Distribution of Interest
+		Rates as a Regime-Switching Process. \textit{Journal of Financial
+			Economics}, 42(1), 27--62.
+		
+		\bibitem[Haas et al.(2004)]{haasmittnikpaolella2004}
+		Haas, M., Mittnik, S., \& Paolella, M.~S. (2004a). A New Approach to
+		Markov-Switching GARCH Models. \textit{Journal of Financial
+			Econometrics}, 2(4), 493--530.
+		
+		\bibitem[Hamilton and Susmel(1994)]{hamiltonsusmel1994}
+		Hamilton, J.~D., \& Susmel, R. (1994). Autoregressive Conditional
+		Heteroskedasticity and Changes in Regime. \textit{Journal of
+			Econometrics}, 64(1--2), 307--333.
+		
+		\bibitem[Klaassen(2002)]{klaassen2002}
+		Klaassen, F. (2002). Improving GARCH Volatility Forecasts with
+		Regime-Switching GARCH. \textit{Empirical Economics}, 27(2), 363--394.
+		
+		\bibitem[Marcucci(2005)]{marcucci2005}
+		Marcucci, J. (2005). Forecasting Stock Market Volatility with
+		Regime-Switching GARCH Models. \textit{Studies in Nonlinear Dynamics \&
+			Econometrics}, 9(4), Article~6.
+		
+		\bibitem{meeserogoff1983}
+		Meese, R.~A., \& Rogoff, K. (1983). Empirical Exchange Rate Models of
+		the Seventies: Do They Fit Out of Sample? \textit{Journal of
+			International Economics}, 14(1--2), 3--24.
+		
+		\bibitem[West(1996)]{west1996}
+		West, K.~D. (1996). Asymptotic Inference about Predictive Ability.
+		\textit{Econometrica}, 64(5), 1067--1084.
+		
+	\end{thebibliography}
+	
+	
+\end{document}

@@ -1,4 +1,6 @@
 ﻿# FX Volatility Regime Model
+[![SSRN](https://img.shields.io/badge/SSRN-7532760-blue)](https://doi.org/10.2139/ssrn.7532760)
+
 
 > A quantitative model exploring the FX market (EUR/USD) to measure a "fear"/volatility proxy that explains returns and detects market regimes (low/avarage/high).
 

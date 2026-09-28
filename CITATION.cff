@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated working paper."
+title: "Quantitative of modeling of FOREX (EUR/USD) exchange rate volatility"
+authors:
+  - family-names: ZEWU
+    given-names: Armand Yawo Isaac
+    orcid: "https://orcid.org/0009-0002-7485-7317"
+repository-code: "https://github.com/Armando-ZEWU/FOREX-VOLATILITY-REGIME-MODEL"
+license: MIT
+preferred-citation:
+  type: unpublished
+  title: "Quantitative Modeling of EUR/USD Exchange Rate Volatility"
+  authors:
+    - family-names: ZEWU
+      given-names: Armand Yawo Isaac
+  year: 2026
+  doi: "10.2139/ssrn.7532760"
+  notes: "SSRN Working Paper No. 7532760"
